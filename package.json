@@ -4,7 +4,7 @@
   "description": "web editor for query language",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/xel23/WebEditorForQueryLanguage#readme",
   "devDependencies": {
+    "jest": "^24.8.0",
     "webpack": "^4.35.2",
     "webpack-cli": "^3.3.5"
   }
