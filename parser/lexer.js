@@ -7,7 +7,7 @@ class Lexer {
         let tokens = [];
 
         let isOperator = function (c) {
-            return /[:;\^\$\.\|\?\*\+\(\)/-=!]/.test(c);
+            return /[:;\^\$\.\|\?\*\+\(\)/\-=!]/.test(c);
         };
 
         let isWhiteSpace = function (c) {
@@ -143,12 +143,12 @@ const operators = Object.freeze({
 });
 
 const keywords = Object.freeze({
-    AND: 'and',
-    IF: 'if',
-    OR: 'or',
-    FALSE: 'false',
-    TRUE: 'true',
-    PROJECT: 'project'
+    AND: 'and', // 1
+    IF: 'if', // 2
+    OR: 'or', // 3
+    FALSE: 'false', // 4
+    TRUE: 'true', // 5
+    PROJECT: 'project' // 6
 });
 
 module.exports = Lexer;
