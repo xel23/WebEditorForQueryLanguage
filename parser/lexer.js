@@ -7,7 +7,7 @@ class Lexer {
         let tokens = [];
 
         let isOperator = function (c) {
-            return /[:;\^\$\.\|\?\*\+\(\)/]/.test(c);
+            return /[:;\^\$\.\|\?\*\+\(\)/-]/.test(c);
         };
 
         let isWhiteSpace = function (c) {
@@ -63,7 +63,25 @@ class Lexer {
             }
 
             else if (isOperator(c)) {
-                addToken('operator', c);
+                switch (c) {
+                    case '(': addToken(Object.keys(operators)[0], operators.LEFT_PAREN); break;
+                    case ')': addToken(Object.keys(operators)[1], operators.RIGHT_PAREN); break;
+                    case '{': addToken(Object.keys(operators)[2], operators.LEFT_BRACE); break;
+                    case '}': addToken(Object.keys(operators)[3], operators.RIGHT_BRACE); break;
+                    case '\,': addToken(Object.keys(operators)[4], operators.COMMA); break;
+                    case '\.': addToken(Object.keys(operators)[5], operators.DOT); break;
+                    case '-': addToken(Object.keys(operators)[6], operators.MINUS); break;
+                    case '\+': addToken(Object.keys(operators)[7], operators.PLUS); break;
+                    case ';': addToken(Object.keys(operators)[8], operators.SEMICOLON); break;
+                    case '\*': addToken(Object.keys(operators)[9], operators.STAR); break;
+                    // case '\/': addToken(Object.keys(operators)[10], operators.SLASH); break;
+                    case '!': addToken(Object.keys(operators)[11], operators.BANG); break;
+                    case '=': addToken(Object.keys(operators)[13], operators.EQUAL); break;
+                    case '<': addToken(Object.keys(operators)[15], operators.LESS); break;
+                    case '>': addToken(Object.keys(operators)[17], operators.GREATER); break;
+                    case ':': addToken(Object.keys(operators)[19], operators.COLON); break;
+                }
+                // addToken('operator', c);
                 advance.bind(this)();
             }
             else {
@@ -76,27 +94,27 @@ class Lexer {
     }
 }
 
-// single character tokens
 const operators = Object.freeze({
-    LEFT_PAREN: '(',
-    RIGHT_PAREN: ')',
-    LEFT_BRACE: '{',
-    RIGHT_BRACE: '}',
-    COMMA: '\,',
-    DOT: '\.',
-    MINUS: '-',
-    PLUS: '\+',
-    SEMICOLON: ';',
-    STAR: '\*',
-    // SLASH: '\/',
-    BANG: '!',
-    BANG_EQUAL: '!=',
-    EQUAL: '=',
-    EQUAL_EQUAL: '==',
-    LESS: '<',
-    LESS_EQUAL: '<=',
-    GREATER: '>',
-    GREATER_EQUAL: '>='
+    LEFT_PAREN: '(',     // 0
+    RIGHT_PAREN: ')',    // 1
+    LEFT_BRACE: '{',     // 2
+    RIGHT_BRACE: '}',    // 3
+    COMMA: '\,',         // 4
+    DOT: '\.',           // 5
+    MINUS: '-',          // 6
+    PLUS: '\+',          // 7
+    SEMICOLON: ';',      // 8
+    STAR: '\*',          // 9
+    SLASH: '\/',      // 10
+    BANG: '!',           // 11
+    BANG_EQUAL: '!=',    // 12
+    EQUAL: '=',          // 13
+    EQUAL_EQUAL: '==',   // 14
+    LESS: '<',           // 15
+    LESS_EQUAL: '<=',    // 16
+    GREATER: '>',        // 17
+    GREATER_EQUAL: '>=', // 18
+    COLON: ':'           // 19
 });
 
 const keywords = Object.freeze({
@@ -107,7 +125,5 @@ const keywords = Object.freeze({
     TRUE: 'true',
     PROJECT: 'project'
 });
-
-// one or two character tokens
 
 module.exports = Lexer;
