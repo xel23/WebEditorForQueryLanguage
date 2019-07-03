@@ -7,7 +7,7 @@ class Lexer {
         let tokens = [];
 
         let isOperator = function (c) {
-            return /[:;\^\$\.\|\?\*\+\(\)/-]/.test(c);
+            return /[:;\^\$\.\|\?\*\+\(\)/-=!]/.test(c);
         };
 
         let isWhiteSpace = function (c) {
@@ -56,7 +56,6 @@ class Lexer {
                 let word = c;
                 while (isSymbol(advance.bind(this)())) {
                     word += c;
-
                 }
 
                 addToken('word', word);
@@ -74,14 +73,40 @@ class Lexer {
                     case '\+': addToken(Object.keys(operators)[7], operators.PLUS); break;
                     case ';': addToken(Object.keys(operators)[8], operators.SEMICOLON); break;
                     case '\*': addToken(Object.keys(operators)[9], operators.STAR); break;
-                    // case '\/': addToken(Object.keys(operators)[10], operators.SLASH); break;
-                    case '!': addToken(Object.keys(operators)[11], operators.BANG); break;
+                    case '\/': addToken(Object.keys(operators)[10], operators.SLASH); break;
+                    case '!': {
+                        if (advance.bind(this)() === '=') {
+                            addToken(Object.keys(operators)[12], operators.BANG_EQUAL);
+                        }
+                        else {
+                            addToken(Object.keys(operators)[11], operators.BANG);
+                            i--;
+                        }
+                        break;
+                    }
                     case '=': addToken(Object.keys(operators)[13], operators.EQUAL); break;
-                    case '<': addToken(Object.keys(operators)[15], operators.LESS); break;
-                    case '>': addToken(Object.keys(operators)[17], operators.GREATER); break;
+                    case '<': {
+                        if ( advance.bind(this)() === '=') {
+                            addToken(Object.keys(operators)[16], operators.LESS_EQUAL);
+                        }
+                        else {
+                            addToken(Object.keys(operators)[15], operators.LESS);
+                            i--;
+                        }
+                        break;
+                    }
+                    case '>': {
+                        if (advance.bind(this)() === '=') {
+                            addToken(Object.keys(operators)[18], operators.GREATER_EQUAL);
+                        }
+                        else {
+                            addToken(Object.keys(operators)[17], operators.GREATER);
+                            i--;
+                        }
+                        break;
+                    }
                     case ':': addToken(Object.keys(operators)[19], operators.COLON); break;
                 }
-                // addToken('operator', c);
                 advance.bind(this)();
             }
             else {
@@ -105,7 +130,7 @@ const operators = Object.freeze({
     PLUS: '\+',          // 7
     SEMICOLON: ';',      // 8
     STAR: '\*',          // 9
-    SLASH: '\/',      // 10
+    SLASH: '\/',         // 10
     BANG: '!',           // 11
     BANG_EQUAL: '!=',    // 12
     EQUAL: '=',          // 13
