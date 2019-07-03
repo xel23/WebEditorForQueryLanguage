@@ -1,7 +1,8 @@
 let lexer = require('./lexer');
 
 function parser(str) {
-    return lexer(str);
+    let lex = new lexer(str);
+    return lex.lexer();
 }
 
 module.exports = parser;
