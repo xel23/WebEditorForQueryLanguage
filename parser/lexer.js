@@ -6,119 +6,6 @@ class Lexer {
         this.tokens = [];
     }
 
-    // lexer() {
-    //     let isOperator = function (c) {
-    //         return /[:;\^\$\.\|\?\*\+\(\)/\-=!]/.test(c);
-    //     };
-    //
-    //     let isWhiteSpace = function (c) {
-    //         return /[\s\t\r\n]/.test(c);
-    //     };
-    //
-    //     let isSymbol = function (c) {
-    //         return typeof c === "undefined" ? false : /[a-zA-Z_0-9]/.test(c);
-    //     };
-    //
-    //     let isDigit = function (c) {
-    //         return /[\d]/.test(c);
-    //     };
-    //
-    //     let addToken = function (type, value) {
-    //         this.tokens.push({
-    //             type: type,
-    //             value: value
-    //         })
-    //     };
-    //
-    //     let c, i = 0;
-    //
-    //     let advance = function () {
-    //         return c = this.str[++i];
-    //     };
-    //
-    //     while (i < this.str.length) {
-    //         c = this.str[i];
-    //         if (isWhiteSpace(c)) {
-    //             advance.bind(this)();
-    //         }
-    //
-    //         else if (isDigit(c)) {
-    //             let num = c;
-    //             while (isDigit(advance.bind(this)())) {
-    //                 num += c;
-    //             }
-    //
-    //             num = parseFloat(num);
-    //
-    //             addToken('number', num);
-    //         }
-    //
-    //         else if (isSymbol(c)) {
-    //             let word = c;
-    //             while (isSymbol(advance.bind(this)())) {
-    //                 word += c;
-    //             }
-    //
-    //             addToken('word', word);
-    //         }
-    //
-    //         else if (isOperator(c)) {
-    //             switch (c) {
-    //                 case '(': addToken(Object.keys(operators)[0], operators.LEFT_PAREN); break;
-    //                 case ')': addToken(Object.keys(operators)[1], operators.RIGHT_PAREN); break;
-    //                 case '{': addToken(Object.keys(operators)[2], operators.LEFT_BRACE); break;
-    //                 case '}': addToken(Object.keys(operators)[3], operators.RIGHT_BRACE); break;
-    //                 case '\,': addToken(Object.keys(operators)[4], operators.COMMA); break;
-    //                 case '\.': addToken(Object.keys(operators)[5], operators.DOT); break;
-    //                 case '-': addToken(Object.keys(operators)[6], operators.MINUS); break;
-    //                 case '\+': addToken(Object.keys(operators)[7], operators.PLUS); break;
-    //                 case ';': addToken(Object.keys(operators)[8], operators.SEMICOLON); break;
-    //                 case '\*': addToken(Object.keys(operators)[9], operators.STAR); break;
-    //                 case '\/': addToken(Object.keys(operators)[10], operators.SLASH); break;
-    //                 case '!': {
-    //                     if (advance.bind(this)() === '=') {
-    //                         addToken(Object.keys(operators)[12], operators.BANG_EQUAL);
-    //                     }
-    //                     else {
-    //                         addToken(Object.keys(operators)[11], operators.BANG);
-    //                         i--;
-    //                     }
-    //                     break;
-    //                 }
-    //                 case '=': addToken(Object.keys(operators)[13], operators.EQUAL); break;
-    //                 case '<': {
-    //                     if ( advance.bind(this)() === '=') {
-    //                         addToken(Object.keys(operators)[16], operators.LESS_EQUAL);
-    //                     }
-    //                     else {
-    //                         addToken(Object.keys(operators)[15], operators.LESS);
-    //                         i--;
-    //                     }
-    //                     break;
-    //                 }
-    //                 case '>': {
-    //                     if (advance.bind(this)() === '=') {
-    //                         addToken(Object.keys(operators)[18], operators.GREATER_EQUAL);
-    //                     }
-    //                     else {
-    //                         addToken(Object.keys(operators)[17], operators.GREATER);
-    //                         i--;
-    //                     }
-    //                     break;
-    //                 }
-    //                 case ':': addToken(Object.keys(operators)[19], operators.COLON); break;
-    //             }
-    //             advance.bind(this)();
-    //         }
-    //         else {
-    //             throw "Unrecognized token";
-    //         }
-    //     }
-    //
-    //     addToken('(end)');
-    //     return this.tokens;
-    // }
-
     scanTokens() {
         while (!this.isAtEnd()) {
             this.start = this.current;
@@ -131,7 +18,6 @@ class Lexer {
 
     scanToken() {
         let c = this.advance();
-        // if (isOperator(c)) {
             switch (c) {
                 case '(': this.addToken(Object.keys(operators)[0]); break;
                 case ')': this.addToken(Object.keys(operators)[1]); break;
@@ -163,11 +49,6 @@ class Lexer {
                     throw 'Unexpected token';
                 }
             }
-            // advance.bind(this)();
-        // }
-        // else {
-        //     throw "Unrecognized token";
-        // }
     }
 
     isAtEnd() {
