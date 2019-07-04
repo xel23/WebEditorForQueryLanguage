@@ -9,7 +9,7 @@ class Lexer {
     scanTokens() {
         while (!this.isAtEnd()) {
             this.start = this.current;
-            this.scanTokens();
+            this.scanToken();
         }
 
         this.tokens.push(new Token(operators.EOF, "", null));
@@ -90,12 +90,22 @@ class Lexer {
 
     number() {
         while (this.isDigit(this.peek())) this.advance();
+        if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+            this.advance();
+
+            while (this.isDigit(this.peek())) this.advance();
+        }
         this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)));
     }
 
     peek() {
         if (this.isAtEnd()) return '\0';
         return this.str[this.current];
+    }
+
+    peekNext() {
+        if (this.current + 1 >= this.str.length) return '\0';
+        return this.str[this.current + 1];
     }
 }
 
