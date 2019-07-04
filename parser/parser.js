@@ -18,18 +18,18 @@ class Parser {
     }
 
     equality() {
-        let expr = this.comparsion();
+        let expr = this.comparison();
 
         while (this.match()) { // TO DO: move the operators enum
             let operator = this.previous();
-            let right = this.comparsion();
+            let right = this.comparison();
             // expr = new Binary(expr, operator, right); TO DO: Binary object
         }
 
         return expr;
     }
 
-    comparsion() {
+    comparison() {
         let expr = this.addition();
 
         while (this.match()) { // TO DO: move the operators enum
