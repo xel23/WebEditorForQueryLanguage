@@ -1,9 +1,6 @@
 const operators = Object.freeze({
     LEFT_PAREN: '(',     // 0
     RIGHT_PAREN: ')',    // 1
-    LEFT_BRACE: '{',     // 2
-    RIGHT_BRACE: '}',    // 3
-    COMMA: '\,',         // 4
     DOT: '\.',           // 5
     MINUS: '-',          // 6
     PLUS: '\+',          // 7
@@ -19,7 +16,10 @@ const operators = Object.freeze({
     GREATER: '>',        // 17
     GREATER_EQUAL: '>=', // 18
     COLON: ':',          // 19
-    EOF: '(end)'         // 20
+    EOF: '(end)',        // 20
+    NOT: 'not',          // 21
+    AND: 'and',          // 22
+    OR: 'or'             // 23
 });
 
 module.exports = operators;

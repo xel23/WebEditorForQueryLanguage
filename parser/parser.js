@@ -11,7 +11,6 @@ class Parser {
     }
 
     parse() {
-        // return this.tokens;
         return this.expression();
     }
 

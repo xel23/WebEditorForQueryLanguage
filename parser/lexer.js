@@ -1,5 +1,3 @@
-// check for unary operators and other operators
-
 let operators = require('./operators');
 
 class Lexer {
@@ -25,9 +23,6 @@ class Lexer {
             switch (c) {
                 case '(': this.addToken(operators.LEFT_PAREN); break;
                 case ')': this.addToken(operators.RIGHT_PAREN); break;
-                case '{': this.addToken(operators.LEFT_BRACE); break;
-                case '}': this.addToken(operators.RIGHT_BRACE); break;
-                case '\,': this.addToken(operators.COMMA); break;
                 case '\.': this.addToken(operators.DOT); break;
                 case '-': this.addToken(operators.MINUS); break;
                 case '\+': this.addToken(operators.PLUS); break;
