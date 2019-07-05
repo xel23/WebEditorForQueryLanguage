@@ -4,7 +4,8 @@
   "description": "web editor for query language",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test1": "node ./parser/parser"
   },
   "repository": {
     "type": "git",
