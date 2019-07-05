@@ -6,6 +6,10 @@ const types = Object.freeze({
     STRING: 'STRING',
     IDENTIFIER: 'IDENTIFIER',
     KEYWORD: 'KEYWORD',
+    FIELD_NAME: 'FIELD_NAME',
+    FIELD_VALUE: 'FIELD_VALUE',
+    TUPLE_NAME: 'TUPLE_NAME',
+    FIELD: 'FIELD',
 });
 
 module.exports = types;
