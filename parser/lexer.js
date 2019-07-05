@@ -1,4 +1,3 @@
-// TO DO: rewrite arguments for addToken in scanToken()
 // check for unary operators and other operators
 
 let operators = require('./operators');
@@ -24,26 +23,23 @@ class Lexer {
     scanToken() {
         let c = this.advance();
             switch (c) {
-                case '(': this.addToken(Object.keys(operators)[0]); break;
-                case ')': this.addToken(Object.keys(operators)[1]); break;
-                case '{': this.addToken(Object.keys(operators)[2]); break;
-                case '}': this.addToken(Object.keys(operators)[3]); break;
-                case '\,': this.addToken(Object.keys(operators)[4]); break;
-                case '\.': this.addToken(Object.keys(operators)[5]); break;
-                case '-': this.addToken(Object.keys(operators)[6]); break;
-                case '\+': this.addToken(Object.keys(operators)[7]); break;
-                case ';': this.addToken(Object.keys(operators)[8]); break;
-                case '\*': this.addToken(Object.keys(operators)[9]); break;
-                case '\/': this.addToken(Object.keys(operators)[10]); break;
-                case '!': this.addToken(this.match('=') ? Object.keys(operators)[12] :
-                    Object.keys(operators)[11]); break;
-                case '=': this.addToken(this.match('=') ? Object.keys(operators)[14] :
-                    Object.keys(operators)[13]); break;
-                case '<': this.addToken(this.match('=') ? Object.keys(operators)[16] :
-                    Object.keys(operators)[15]); break;
-                case '>': this.addToken(this.match('=') ? Object.keys(operators)[18] :
-                    Object.keys(operators)[17]); break;
-                case ':': this.addToken(Object.keys(operators)[19]); break;
+                case '(': this.addToken(operators.LEFT_PAREN); break;
+                case ')': this.addToken(operators.RIGHT_PAREN); break;
+                case '{': this.addToken(operators.LEFT_BRACE); break;
+                case '}': this.addToken(operators.RIGHT_BRACE); break;
+                case '\,': this.addToken(operators.COMMA); break;
+                case '\.': this.addToken(operators.DOT); break;
+                case '-': this.addToken(operators.MINUS); break;
+                case '\+': this.addToken(operators.PLUS); break;
+                case ';': this.addToken(operators.SEMICOLON); break;
+                case '\*': this.addToken(operators.STAR); break;
+                case '\/': this.addToken(operators.SLASH); break;
+                case '!': this.addToken(this.match('=') ? operators.BANG_EQUAL : operators.BANG); break;
+                case '=': this.addToken(this.match('=') ? operators.EQUAL_EQUAL : operators.EQUAL); break;
+                case '<': this.addToken(this.match('=') ? operators.LESS_EQUAL : operators.LESS); break;
+                case '>': this.addToken(this.match('=') ? operators.GREATER_EQUAL :
+                    operators.GREATER); break;
+                case ':': this.addToken(operators.COLON); break;
                 case ' ':
                 case '\r':
                 case '\t':

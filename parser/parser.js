@@ -8,7 +8,6 @@ class Parser {
         let lex = new lexer(this.str);
         this.tokens = lex.scanTokens();
         this.current = 0;
-        return this.parse();
     }
 
     parse() {
