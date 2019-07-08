@@ -1,3 +1,5 @@
+// TO DO: fix bug related with several commas and Field after that
+
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
@@ -18,22 +20,12 @@ class Unary {
     }
 }
 
-class Literal {
-    constructor(literal) {
-        this.literal = literal;
-    }
-}
-
 class Grouping {
     constructor(expr) {
         this.expr = expr;
     }
 
 }
-
-module.exports = Parser;
-
-
 
 // Below is parser for Hub query grammar
 class Item {
@@ -58,7 +50,7 @@ class Tuple extends Item {
 }
 
 
-class NewParser_ {
+class Parser {
     constructor(str) {
         this.str = str;
         let lex = new lexer(this.str);
@@ -131,9 +123,10 @@ class NewParser_ {
                 if (t !== types.FIELD_NAME) {
                     right.push(this.tokens[this.current - 1]);
                     t = this.tokens[this.current + 1].type;
-                    while (this.match(symbols.COMMA) && this.tokens[this.current + 1].type !== types.FIELD_NAME) {
+                    while (this.match(symbols.COMMA) && t !== types.FIELD_NAME) {
                         right.push(this.tokens[this.current]);
                         this.advance();
+                        t = this.tokens[this.current + 1].type;
                     }
 
                     return right;
@@ -150,8 +143,11 @@ class NewParser_ {
     }
 
     primary() {
+        // if (this.match(types.KEYWORD) || this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) ||
+        //     this.match(types.TUPLE_NAME)) return new Literal(this.previous().literal);
+
         if (this.match(types.KEYWORD) || this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) ||
-            this.match(types.TUPLE_NAME)) return new Literal(this.previous().literal);
+            this.match(types.TUPLE_NAME) || this.match(types.STRING)) return this.previous().literal;
 
         if (this.match(operators.LEFT_PAREN)) {
             let expr = this.orExpression();
@@ -227,13 +223,16 @@ class NewParser_ {
 }
 
 try {
-    // let t = new NewParser_('login: {darth.vader}, yoda access(project: DS,with: Developer)');
+    let t = new Parser('login: {darth.vader}, yoda access(project: DS, DF, with: Developer)');
     // let t = new NewParser_('not authModule: Google and has: ownRole');
     // let t = new NewParser_('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
     // let t = new NewParser_('(login: admin or login: root) and hasLicense: YouTrack');
-    let t = new NewParser_('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
+    // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
+    // let t = new Parser('login: admin, test, with: acc');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {
     console.log(e);
 }
+
+module.exports = Parser;
