@@ -10,6 +10,7 @@ const types = Object.freeze({
     FIELD_VALUE: 'FIELD_VALUE',
     TUPLE_NAME: 'TUPLE_NAME',
     FIELD: 'FIELD',
+    OPERATOR: 'OPERATOR',
 });
 
 module.exports = types;

@@ -169,7 +169,7 @@ class Lexer {
             this.scanToken();
         }
         else if (this.str.substring(this.start, this.current).toUpperCase() in operators) {
-            this.addToken(types.KEYWORD, this.str.substring(this.start, this.current));
+            this.addToken(types.OPERATOR, this.str.substring(this.start, this.current));
         }
         else {
             this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current));
@@ -199,10 +199,3 @@ class Lexer {
 }
 
 module.exports = Lexer;
-
-try {
-    let t = new Lexer('login: {darth.vader}, yoda access(project: DS,with: Developer)');
-    console.log(t.scanTokens());
-} catch (e) {
-    console.log(e);
-}
