@@ -1,4 +1,6 @@
 // TO DO: fix bug related with several commas and Field after that
+// without whitespaces
+// binary and unary operator
 
 let lexer = require('./lexer');
 let operators = require('./operators');
