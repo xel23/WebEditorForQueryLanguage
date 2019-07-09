@@ -228,7 +228,7 @@ try {
     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-    let t = new Parser('(login: user or login: user1) and (with: pp or with: tt)');
+    let t = new Parser('login: user and login: user1 and with: tt');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {

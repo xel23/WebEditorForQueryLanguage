@@ -192,6 +192,102 @@ class Tuple extends Item {
                             )
                         )
                     )},
+
+        // 15. 14 with Tuple
+        {input: '(login: user or login: user1) and accessible(with: pp or with: tt)', output:
+            new Binary(
+                new Grouping(
+                    new Binary(
+                        new Field('login', 'user'),
+                        new Token('OPERATOR', 'or', 'or'),
+                        new Field('login', 'user1')
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Tuple('accessible',
+                    new Grouping(
+                        new Binary(
+                            new Field('with', 'pp'),
+                            new Token('OPERATOR', 'or', 'or'),
+                            new Field('with', 'tt')
+                        )
+                    )
+                )
+            )},
+
+        // 16. 15 with not operator
+        {input: '(login: user or login: user1) and not accessible(with: pp or with: tt)', output:
+            new Binary(
+                new Grouping(
+                    new Binary(
+                        new Field('login', 'user'),
+                        new Token('OPERATOR', 'or', 'or'),
+                        new Field('login', 'user1')
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Unary(
+                    new Token('OPERATOR', 'not', 'not'),
+                    new Tuple('accessible',
+                        new Grouping(
+                            new Binary(
+                                new Field('with', 'pp'),
+                                new Token('OPERATOR', 'or', 'or'),
+                                new Field('with', 'tt')
+                            )
+                        )
+                    )
+                )
+            )},
+
+        // 17. 16 + comma
+        {input: '(login: user or login: user1) and not accessible(with: pp, comma: tqt)', output:
+            new Binary(
+                new Grouping(
+                    new Binary(
+                        new Field('login', 'user'),
+                        new Token('OPERATOR', 'or', 'or'),
+                        new Field('login', 'user1')
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Unary(
+                    new Token('OPERATOR', 'not', 'not'),
+                    new Tuple('accessible',
+                        new Grouping(
+                            new Binary(
+                                new Field('with', 'pp'),
+                                new Token(',', null, undefined),
+                                new Field('comma', 'tqt')
+                            )
+                        )
+                    )
+                )
+            )},
+
+        // 18. many ands
+        {input: 'login: user and login: user1 and with: tt', output:
+            new Binary(
+                new Binary(
+                    new Field('login', 'user'),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Field('login', 'user1')
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Field( 'with', 'tt')
+            )},
+
+        // 19. many ors
+        {input: 'login: user or login: user1 or with: tt', output:
+            new Binary(
+                new Binary(
+                    new Field('login', 'user'),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new Field('login', 'user1')
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new Field( 'with', 'tt')
+            )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
             let par = new parser(it.input);
