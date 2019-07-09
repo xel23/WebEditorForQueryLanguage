@@ -222,17 +222,27 @@ class Parser {
     }
 }
 
-try {
-    // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
-    // let t = new Parser('not authModule: Google and has: ownRole');
-    // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
-    // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
-    // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-    let t = new Parser('login: user and login: user1 and with: tt');
-    let checking = t.parse();
-    console.log(checking);
-} catch(e) {
-    console.log(e);
-}
+// try {
+//     // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
+//     // let t = new Parser('not authModule: Google and has: ownRole');
+//     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
+//     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
+//     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
+//     let t = new Parser('login: user, login: user1 and with: tt');
+//     let checking = t.parse();
+//     console.log(checking);
+// } catch(e) {
+//     console.log(e);
+// }
+
+document.getElementById('query').oninput = function () {
+    try {
+        let p = new Parser(document.getElementById('query').value);
+        let res = p.parse();
+        document.getElementById('result').value = JSON.stringify(res, null, 7);
+    } catch (e) {
+        document.getElementById('result').value = 'Incorrect query';
+    }
+};
 
 module.exports = Parser;
