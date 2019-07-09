@@ -177,6 +177,7 @@ class Lexer {
     }
 
     fieldValueIdentifier() {
+        this.start = this.current;
         while (this.peek() === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
             this.advance();
             this.start = this.current;

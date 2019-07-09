@@ -1,6 +1,6 @@
 // TO DO: fix bug related with several commas and Field after that
-// without whitespaces
 // binary and unary operator
+// numbers
 
 let lexer = require('./lexer');
 let operators = require('./operators');
@@ -230,7 +230,7 @@ class Parser {
 //     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
 //     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
 //     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-//     let t = new Parser('login: user, login: user1 and with: tt');
+//     let t = new Parser('login:user');
 //     let checking = t.parse();
 //     console.log(checking);
 // } catch(e) {
