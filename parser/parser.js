@@ -223,12 +223,12 @@ class Parser {
 }
 
 try {
-    let t = new Parser('login: {darth.vader}, yoda access(project: DS, DF, with: Developer)');
-    // let t = new NewParser_('not authModule: Google and has: ownRole');
-    // let t = new NewParser_('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
-    // let t = new NewParser_('(login: admin or login: root) and hasLicense: YouTrack');
+    // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
+    // let t = new Parser('not authModule: Google and has: ownRole');
+    // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
+    // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-    // let t = new Parser('login: admin, test, with: acc');
+    let t = new Parser('(login: user or login: user1) and (with: pp or with: tt)');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {
