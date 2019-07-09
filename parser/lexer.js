@@ -150,6 +150,11 @@ class Lexer {
 
         while (this.isAlphaNumeric(this.peek())) this.advance();
 
+        // while(this.str[this.current] === ' ') {
+        //     this.advance();
+        // }
+        // this.start = this.current;
+
         if (this.str[this.current] === ':') {
             let fieldName = this.str.substring(this.start, this.current);
             this.addToken(types.FIELD_NAME, fieldName);
