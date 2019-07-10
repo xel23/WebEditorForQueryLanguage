@@ -2,6 +2,7 @@
 // binary and unary operator
 // numbers
 // whitespaces
+// or & and expression for order, #2
 
 let lexer = require('./lexer');
 let operators = require('./operators');
@@ -66,13 +67,21 @@ class Parser {
     }
 
     orExpression() {
-        return this.andExpression();
+        let expr = this.andExpression();
+
+        while (this.matchOperator(operators.OR)) {
+            let operator = this.previous();
+            let right = this.andExpression();
+            expr = new Binary(expr, operator, right);
+        }
+
+        return expr;
     }
 
     andExpression() {
         let expr = this.signExpression();
 
-        while (this.match(types.OPERATOR)) {
+        while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
             let right = this.signExpression();
             expr = new Binary(expr, operator, right);
@@ -84,7 +93,7 @@ class Parser {
     signExpression() {
         let expr = this.item();
 
-        while (this.match(types.OPERATOR, symbols.COMMA, types.TUPLE_NAME)) {
+        while (this.match(symbols.COMMA) || this.matchOperator(operators.NOT)) {
             let operator = this.previous();
             let right = this.item();
             expr = new Binary(expr, operator, right);
@@ -172,6 +181,17 @@ class Parser {
         return false;
     }
 
+    matchOperator() {
+        for (let i = 0; i < arguments.length; i++) {
+            if (this.checkOperator(arguments[i])) {
+                this.advance();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     matchNext() {
         for (let i = 0; i < arguments.length; i++) {
             if (this.checkNext(arguments[i])) {
@@ -186,6 +206,11 @@ class Parser {
     check(type) {
         if (this.isAtEnd()) return false;
         return this.peek().type === type;
+    }
+
+    checkOperator(type) {
+        if (this.isAtEnd()) return false;
+        return this.peek().lexeme === type;
     }
 
     checkNext(type) {
@@ -231,7 +256,7 @@ try {
     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-    let t = new Parser('login : user');
+    let t = new Parser('login: user or login: us and login: admin');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {

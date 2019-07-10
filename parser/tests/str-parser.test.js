@@ -87,13 +87,13 @@ class Tuple extends Item {
         // 6. 3 Fields with 'and' and 'or' operators
         {input: 'login: admin or login: test and hasLicense: YouTrack', output:
                 new Binary(
+                    new Field('login', 'admin'),
+                    new Token ('OPERATOR', 'or', 'or'),
                     new Binary(
-                        new Field('login','admin'),
-                        new Token('OPERATOR', 'or', 'or'),
-                        new Field('login','test'),
-                    ),
-                    new Token('OPERATOR', 'and', 'and'),
-                    new Field('hasLicense','YouTrack')
+                        new Field('login', 'test'),
+                        new Token('OPERATOR', 'and', 'and'),
+                        new Field('hasLicense', 'YouTrack')
+                    )
                 )},
 
         // 7. Tuple with Filed with long value
