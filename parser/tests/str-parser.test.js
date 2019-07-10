@@ -307,7 +307,7 @@ class Tuple extends Item {
                 new Field('login', 'boss')
             )},
 
-        // Tuple after operator
+        // 21. Tuple after operator
         {input: 'not login: user and accessible(login: boss)', output:
             new Binary(
                 new Unary(
@@ -320,6 +320,13 @@ class Tuple extends Item {
                         new Field('login', 'boss')
                     )
                 )
+            )},
+
+        // 22. bug with several fieldValue with commas and with nothing after that
+        {input: 'login: admin, name,', output:
+            new Field('login', [
+                new Token('FIELD_VALUE', 'admin', 'admin'),
+                new Token('FIELD_VALUE', 'name', 'name')]
             )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {

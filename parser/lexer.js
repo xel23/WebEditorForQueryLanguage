@@ -181,7 +181,7 @@ class Lexer {
             this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''));
         }
         else {
-            this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current));
+            this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
         }
     }
 
