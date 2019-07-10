@@ -91,9 +91,14 @@ class Parser {
         let expr = this.item();
 
         while (this.match(symbols.COMMA) || this.matchOperator(operators.NOT)) {
-            let operator = this.previous();
-            let right = this.item();
-            expr = new Binary(expr, operator, right);
+            if (expr instanceof Field) {
+                let operator = this.previous();
+                let right = this.item();
+                expr = new Binary(expr, operator, right);
+            }
+            else {
+                throw 'Operator "," must has Field like left operand'
+            }
         }
 
         return expr;
@@ -262,7 +267,7 @@ class Parser {
 //     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
 //     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
 //     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-//     let t = new Parser('login: admin, name,');
+//     let t = new Parser('login: admin, pass,');
 //     let checking = t.parse();
 //     console.log(checking);
 // } catch(e) {
