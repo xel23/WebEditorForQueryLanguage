@@ -321,13 +321,6 @@ class Tuple extends Item {
                     )
                 )
             )},
-
-        // 22. bug with several fieldValue with commas and with nothing after that
-        {input: 'login: admin, name,', output:
-            new Field('login', [
-                new Token('FIELD_VALUE', 'admin', 'admin'),
-                new Token('FIELD_VALUE', 'name', 'name')]
-            )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
             let par = new parser(it.input);

@@ -180,8 +180,12 @@ class Lexer {
         else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
             this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''));
         }
-        else {
+        else if (this.tokens[this.tokens.length - 1].type === symbols.COMMA) {
             this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
+        }
+        else {
+            console.log('identifier');
+            throw 'Unexpected token';
         }
     }
 
