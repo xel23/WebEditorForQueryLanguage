@@ -288,6 +288,39 @@ class Tuple extends Item {
                 new Token('OPERATOR', 'or', 'or'),
                 new Field( 'with', 'tt')
             )},
+
+        // 20. Checking priority of operators
+        {input: 'not login: user and not login: user1 or login: boss', output:
+            new Binary(
+                new Binary(
+                    new Unary(
+                        new Token('OPERATOR', 'not', 'not'),
+                        new Field('login', 'user')
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Unary(
+                        new Token('OPERATOR', 'not', 'not'),
+                        new Field('login', 'user1')
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new Field('login', 'boss')
+            )},
+
+        // Tuple after operator
+        {input: 'not login: user and accessible(login: boss)', output:
+            new Binary(
+                new Unary(
+                    new Token('OPERATOR', 'not', 'not'),
+                    new Field('login', 'user')
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Tuple('accessible',
+                    new Grouping(
+                        new Field('login', 'boss')
+                    )
+                )
+            )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
             let par = new parser(it.input);

@@ -125,6 +125,10 @@ class Lexer {
     }
 
     string() {
+        // while (this.peek() !== ' ') {
+        //     this.advance();
+        // }
+        // this.start = this.current;
         while (this.peek() !== '}' && !this.isAtEnd()) {
             this.advance();
         }
@@ -150,13 +154,13 @@ class Lexer {
 
         while (this.isAlphaNumeric(this.peek())) this.advance();
 
-        // while(this.str[this.current] === ' ') {
-        //     this.advance();
-        // }
+        while(this.str[this.current] === ' ') {
+            this.advance();
+        }
         // this.start = this.current;
 
         if (this.str[this.current] === ':') {
-            let fieldName = this.str.substring(this.start, this.current);
+            let fieldName = this.str.substring(this.start, this.current).replace(/ /g, '');
             this.addToken(types.FIELD_NAME, fieldName);
 
             this.advance();
@@ -166,15 +170,15 @@ class Lexer {
 
             this.addToken(types.FIELD_VALUE, fieldValue);
         }
-        else if (this.str[this.current] === '(') {
+        else if (this.str[this.current] === '(' && this.str[this.current - 1] !== ' ') {
             this.addToken(types.TUPLE_NAME, this.str.substring(this.start, this.current));
             this.advance();
             this.start = this.current;
             this.addToken(operators.LEFT_PAREN);
             this.scanToken();
         }
-        else if (this.str.substring(this.start, this.current).toUpperCase() in operators) {
-            this.addToken(types.OPERATOR, this.str.substring(this.start, this.current));
+        else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
+            this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''));
         }
         else {
             this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current));
