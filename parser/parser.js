@@ -1,8 +1,6 @@
 // TO DO: fix bug related with several commas and Field after that
-// binary and unary operator
 // numbers
 // whitespaces
-// or & and expression for order, #2
 
 let lexer = require('./lexer');
 let operators = require('./operators');
@@ -125,6 +123,7 @@ class Parser {
         let right = [];
         if (this.match(types.OPERATOR)) {
             operator = this.previous();
+            if (operator.lexeme !== operators.NOT) throw 'Binary operator does not have left expression';
             let _right = this.item();
             return new Unary(operator, _right);
         }
@@ -256,7 +255,7 @@ try {
     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-    let t = new Parser('login: user or login: us and login: admin');
+    let t = new Parser('and login: user or login: us and login: admin');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {
