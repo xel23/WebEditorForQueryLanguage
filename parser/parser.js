@@ -293,7 +293,8 @@ document.getElementById('query').oninput = function () {
         let res = p.parse();
         document.getElementById('result').value = JSON.stringify(res, null, 7);
     } catch (e) {
-        document.getElementById('result').value = 'Incorrect query';
+        document.getElementById('result').value = 'Incorrect query. Just text: \n' +
+            document.getElementById('query').value;
     }
 };
 
