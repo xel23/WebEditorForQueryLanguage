@@ -127,7 +127,9 @@ class Parser {
         let right = [];
         if (this.match(types.OPERATOR)) {
             operator = this.previous();
-            if (operator.lexeme !== operators.NOT) throw 'Binary operator does not have left expression';
+            if (operator.lexeme !== operators.NOT) {
+                throw 'Binary operator must has left expression';
+            }
             let _right = this.item();
             return new Unary(operator, _right);
         }
@@ -142,13 +144,16 @@ class Parser {
                         if (this.isAtEnd()) {
                             return right;
                         }
-                        else {
+                        else if (this.tokens[this.current].type === types.FIELD_VALUE) {
                             right.push(this.tokens[this.current]);
                             this.advance();
                             if (this.isAtEnd())
                                 return right;
                             else
                                 t = this.tokens[this.current + 1].type;
+                        }
+                        else {
+                            throw 'Unexpected value at: ' + this.whereIsErr() + ' symbol';
                         }
                     }
 
@@ -259,29 +264,37 @@ class Parser {
 
         throw message;
     }
+
+    whereIsErr() {
+        let n = 0;
+        for (let i = this.current + 1; i >= 0; i--) {
+            n += this.tokens[i].lexeme === undefined || this.tokens[i].lexeme === null ? 1 : this.tokens[i].lexeme.length;
+        }
+        return n + 1;
+    }
 }
 
-// try {
-//     // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
-//     // let t = new Parser('not authModule: Google and has: ownRole');
-//     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
-//     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
-//     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-//     let t = new Parser('login: admin, pass,');
-//     let checking = t.parse();
-//     console.log(checking);
-// } catch(e) {
-//     console.log(e);
-// }
+try {
+    // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
+    // let t = new Parser('not authModule: Google and has: ownRole');
+    // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
+    // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
+    // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
+    let t = new Parser('login: pass, login: da');
+    let checking = t.parse();
+    console.log(checking);
+} catch(e) {
+    console.log(e);
+}
 
-document.getElementById('query').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('query').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 7);
-    } catch (e) {
-        document.getElementById('result').value = 'Incorrect query';
-    }
-};
+// document.getElementById('query').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('query').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 7);
+//     } catch (e) {
+//         document.getElementById('result').value = 'Incorrect query';
+//     }
+// };
 
 module.exports = Parser;
