@@ -14,7 +14,6 @@ class Token {
     }
 }
 
-// Below is new lexer for Hub query grammar
 class Lexer {
     constructor(str) {
         this.str = str;
@@ -23,7 +22,6 @@ class Lexer {
         this.tokens = [];
     }
 
-    // ok
     scanTokens() {
         while (!this.isAtEnd()) {
             this.start = this.current;
@@ -34,15 +32,21 @@ class Lexer {
         return this.tokens;
     }
 
-    // need to change
-    // not name
     scanToken() {
         let c = this.advance();
         switch (c) {
-            case '(': this.addToken(operators.LEFT_PAREN); break;
+            case '(': {
+                if (this.current - 1 > 0) {
+                    if (this.tokens[this.tokens.length - 1].type !== types.TUPLE_NAME && this.str[this.current - 2] !== ' '
+                    && this.str[this.current - 1] !== '(') {
+                        throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
+                    }
+                }
+                this.addToken(operators.LEFT_PAREN); break;
+            }
             case ')': this.addToken(operators.RIGHT_PAREN); break;
-            case '{': this.addToken(types.STRING, this.string()); break;
-            case ',': this.addToken(symbols.COMMA); break;
+            // case '{': this.addToken(types.STRING, this.string()); break;
+            // case ',': this.addToken(symbols.COMMA); break;
             case ' ':
             case '\t':
             case '\n':
@@ -53,24 +57,23 @@ class Lexer {
                 } else if (this.isAlpha(c)) {
                     this.identifier();
                 } else {
-                    throw "Unexpected token ";
+                    // let err = "";
+                    // for (let i = 0; i < this.current - 1; i++) err += " ";
+                    throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
                 }
             }
         }
     }
 
-    // ok
     isAtEnd() {
         return this.current >= this.str.length;
     }
 
-    // ok
     advance() {
         this.current++;
         return this.str[this.current - 1];
     }
 
-    // need to change
     addToken(type) {
         if (arguments[1] === undefined) {
             this.tokens.push(new Token(type, null));
@@ -87,7 +90,6 @@ class Lexer {
 
     }
 
-    // ok
     match(expected) {
         if (this.isAtEnd()) return false;
         if (this.str[this.current] !== expected) return false;
@@ -96,12 +98,10 @@ class Lexer {
         return true;
     }
 
-    // ok
     isDigit(c) {
         return /[\d]/.test(c);
     };
 
-    // ok
     number() {
         while (this.isDigit(this.peek())) this.advance();
         if (this.peek() === '.' && this.isDigit(this.peekNext())) {
@@ -112,29 +112,25 @@ class Lexer {
         this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)));
     }
 
-    // ok
     peek() {
         if (this.isAtEnd()) return '\0';
         return this.str[this.current];
     }
 
-    // ok
     peekNext() {
         if (this.current + 1 >= this.str.length) return '\0';
         return this.str[this.current + 1];
     }
 
     string() {
-        // while (this.peek() !== ' ') {
-        //     this.advance();
-        // }
-        // this.start = this.current;
         while (this.peek() !== '}' && !this.isAtEnd()) {
             this.advance();
         }
 
         if (this.isAtEnd()) {
-            throw "Unterminated string";
+            // let err = "";
+            // for (let i = 0; i < this.current; i++) err += " ";
+            throw "Expected '}':\n" + this.str + "\n" + this.str.substring(0, this.current) + "^";
         }
 
         this.advance();
@@ -157,7 +153,6 @@ class Lexer {
         while(this.str[this.current] === ' ') {
             this.advance();
         }
-        // this.start = this.current;
 
         if (this.str[this.current] === ':') {
             let fieldName = this.str.substring(this.start, this.current).replace(/ /g, '');
@@ -180,12 +175,13 @@ class Lexer {
         else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
             this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''));
         }
-        else if (this.tokens[this.tokens.length - 1].type === symbols.COMMA) {
-            this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
-        }
+        // else if (this.tokens[this.tokens.length - 1].type === symbols.COMMA) {
+        //     this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
+        // }
         else {
-            console.log('identifier');
-            throw 'Unexpected token';
+            // let err = "";
+            // for (let i = 0; i < this.current - 1; i++) err += " ";
+            throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
         }
     }
 

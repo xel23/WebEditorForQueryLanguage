@@ -117,18 +117,18 @@ class Tuple extends Item {
                         new Field('login','user'))},
 
         // 10. Field + 'and' + 2 Fields between parentheses
-        {input: 'login: user and (name: Ivan, with: test)', output:
-                    new Binary(
-                        new Field('login', 'user'),
-                        new Token('OPERATOR', 'and', 'and'),
-                        new Grouping(
-                            new Binary(
-                                new Field('name', 'Ivan'),
-                                new Token(',', null, undefined),
-                                new Field('with', 'test')
-                            )
-                        )
-                    )},
+        // {input: 'login: user and (name: Ivan, with: test)', output:
+        //             new Binary(
+        //                 new Field('login', 'user'),
+        //                 new Token('OPERATOR', 'and', 'and'),
+        //                 new Grouping(
+        //                     new Binary(
+        //                         new Field('name', 'Ivan'),
+        //                         new Token(',', null, undefined),
+        //                         new Field('with', 'test')
+        //                     )
+        //                 )
+        //             )},
 
         // 11. Not operator with Field
         {input: 'not login: user', output:
@@ -241,29 +241,29 @@ class Tuple extends Item {
             )},
 
         // 17. 16 + comma
-        {input: '(login: user or login: user1) and not accessible(with: pp, comma: tqt)', output:
-            new Binary(
-                new Grouping(
-                    new Binary(
-                        new Field('login', 'user'),
-                        new Token('OPERATOR', 'or', 'or'),
-                        new Field('login', 'user1')
-                    )
-                ),
-                new Token('OPERATOR', 'and', 'and'),
-                new Unary(
-                    new Token('OPERATOR', 'not', 'not'),
-                    new Tuple('accessible',
-                        new Grouping(
-                            new Binary(
-                                new Field('with', 'pp'),
-                                new Token(',', null, undefined),
-                                new Field('comma', 'tqt')
-                            )
-                        )
-                    )
-                )
-            )},
+        // {input: '(login: user or login: user1) and not accessible(with: pp, comma: tqt)', output:
+        //     new Binary(
+        //         new Grouping(
+        //             new Binary(
+        //                 new Field('login', 'user'),
+        //                 new Token('OPERATOR', 'or', 'or'),
+        //                 new Field('login', 'user1')
+        //             )
+        //         ),
+        //         new Token('OPERATOR', 'and', 'and'),
+        //         new Unary(
+        //             new Token('OPERATOR', 'not', 'not'),
+        //             new Tuple('accessible',
+        //                 new Grouping(
+        //                     new Binary(
+        //                         new Field('with', 'pp'),
+        //                         new Token(',', null, undefined),
+        //                         new Field('comma', 'tqt')
+        //                     )
+        //                 )
+        //             )
+        //         )
+        //     )},
 
         // 18. many ands
         {input: 'login: user and login: user1 and with: tt', output:
@@ -319,6 +319,24 @@ class Tuple extends Item {
                     new Grouping(
                         new Field('login', 'boss')
                     )
+                )
+            )},
+
+        {input: '(h:yoda) and(t: g)', output:
+            new Binary(
+                new Grouping(
+                    new Field('h', 'yoda')
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Grouping(
+                    new Field('t', 'g')
+                )
+            )},
+
+        {input: '((h:yoda))', output:
+            new Grouping(
+                new Grouping(
+                    new Field('h', 'yoda')
                 )
             )},
 ].forEach((it) => {

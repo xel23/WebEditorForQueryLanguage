@@ -1,10 +1,9 @@
-// TO DO: fix bug related with several commas and Field after that
-// whitespaces
+// TO DO: tuple name
+// operators keywords
 
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
-let symbols = require('./symbols');
 
 class Binary {
     constructor(left, operator, right) {
@@ -90,15 +89,10 @@ class Parser {
     signExpression() {
         let expr = this.item();
 
-        while (this.match(symbols.COMMA) || this.matchOperator(operators.NOT)) {
-            if (expr instanceof Field) {
-                let operator = this.previous();
-                let right = this.item();
-                expr = new Binary(expr, operator, right);
-            }
-            else {
-                throw 'Operator "," must has Field like left operand'
-            }
+        while (this.matchOperator(operators.NOT)) {
+            let operator = this.previous();
+            let right = this.item();
+            expr = new Binary(expr, operator, right);
         }
 
         return expr;
@@ -123,59 +117,21 @@ class Parser {
     }
 
     unary() {
-        let operator;
-        let right = [];
         if (this.match(types.OPERATOR)) {
-            operator = this.previous();
+            let operator = this.previous();
             if (operator.lexeme !== operators.NOT) {
-                throw 'Binary operator must has left expression';
+                throw 'Binary operator must have left expression';
             }
-            let _right = this.item();
-            return new Unary(operator, _right);
+            let right = this.item();
+            return new Unary(operator, right);
         }
-
-        if (!this.isAtEnd(this.current)) {
-            let t = this.tokens[this.current + 2].type;
-            if (this.matchNext(symbols.COMMA)) {
-                if (t !== types.FIELD_NAME) {
-                    right.push(this.tokens[this.current - 1]);
-                    t = this.tokens[this.current + 1].type;
-                    while (this.match(symbols.COMMA) && t !== types.FIELD_NAME) {
-                        if (this.isAtEnd()) {
-                            return right;
-                        }
-                        else if (this.tokens[this.current].type === types.FIELD_VALUE) {
-                            right.push(this.tokens[this.current]);
-                            this.advance();
-                            if (this.isAtEnd())
-                                return right;
-                            else
-                                t = this.tokens[this.current + 1].type;
-                        }
-                        else {
-                            throw 'Unexpected value at: ' + this.whereIsErr() + ' symbol';
-                        }
-                    }
-
-                    return right;
-                }
-                else {
-                    this.current--;
-                    return this.primary();
-                }
-            }
-        }
-
 
         return this.primary();
     }
 
     primary() {
-        // if (this.match(types.KEYWORD) || this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) ||
-        //     this.match(types.TUPLE_NAME)) return new Literal(this.previous().literal);
-
-        if (this.match(types.KEYWORD) || this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) ||
-            this.match(types.TUPLE_NAME) || this.match(types.STRING)) return this.previous().literal;
+        if (this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) || this.match(types.TUPLE_NAME) ||
+            this.match(types.STRING)) return this.previous().literal;
 
         if (this.match(operators.LEFT_PAREN)) {
             let expr = this.orExpression();
@@ -208,17 +164,6 @@ class Parser {
         return false;
     }
 
-    matchNext() {
-        for (let i = 0; i < arguments.length; i++) {
-            if (this.checkNext(arguments[i])) {
-                this.advance();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     check(type) {
         if (this.isAtEnd()) return false;
         return this.peek().type === type;
@@ -227,11 +172,6 @@ class Parser {
     checkOperator(type) {
         if (this.isAtEnd()) return false;
         return this.peek().lexeme === type;
-    }
-
-    checkNext(type) {
-        if (this.isAtEnd()) return false;
-        return this.peekNext().type === type;
     }
 
     advance() {
@@ -252,7 +192,10 @@ class Parser {
     }
 
     peekNext() {
-        return this.tokens[this.current + 1];
+        if (this.tokens[this.current + 1] !== undefined)
+            return this.tokens[this.current + 1];
+        else
+            throw "Expect SignExpression after '" + this.tokens[this.current - 1].literal + "'";
     }
 
     previous() {
@@ -264,38 +207,24 @@ class Parser {
 
         throw message;
     }
-
-    whereIsErr() {
-        let n = 0;
-        for (let i = this.current + 1; i >= 0; i--) {
-            n += this.tokens[i].lexeme === undefined || this.tokens[i].lexeme === null ? 1 : this.tokens[i].lexeme.length;
-        }
-        return n + 1;
-    }
 }
 
-// try {
-//     // let t = new Parser('login: {darth.vader}, yoda access(project: DS, with: Developer)'); should we use 'access' like operator?
-//     // let t = new Parser('not authModule: Google and has: ownRole');
-//     // let t = new Parser('accessible(for: {Vader}, with: Developer) and accessible(for: Yoda)');
-//     // let t = new Parser('(login: admin or login: root) and hasLicense: YouTrack');
-//     // let t = new Parser('(login: admin or group: star-team) and access(project: {Death Star}, with: {Low-level Admin Read})');
-//     let t = new Parser('login: pass da');
-//     let checking = t.parse();
-//     console.log(checking);
-// } catch(e) {
-//     console.log(e);
-// }
+try {
+    let t = new Parser('((h:yoda)) and((t: g))');
+    let checking = t.parse();
+    console.log(checking);
+} catch(e) {
+    console.log(e);
+}
 
-document.getElementById('query').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('query').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 7);
-    } catch (e) {
-        document.getElementById('result').value = 'Incorrect query. Just text: \n' +
-            document.getElementById('query').value;
-    }
-};
+// document.getElementById('query').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('query').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 7);
+//     } catch (e) {
+//         document.getElementById('result').value = e;
+//     }
+// };
 
 module.exports = Parser;
