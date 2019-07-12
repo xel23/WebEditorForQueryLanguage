@@ -39,7 +39,9 @@ class Lexer {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type !== types.TUPLE_NAME && this.str[this.current - 2] !== ' '
                     && this.str[this.current - 1] !== '(') {
-                        throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
+                        let err = "";
+                        for (let i = 0; i < this.current - 1; i++) err += " ";
+                        throw "Unexpected token:\n" + this.str + "\n" + err + "^";
                     }
                 }
                 this.addToken(operators.LEFT_PAREN); break;
@@ -57,9 +59,9 @@ class Lexer {
                 } else if (this.isAlpha(c)) {
                     this.identifier();
                 } else {
-                    // let err = "";
-                    // for (let i = 0; i < this.current - 1; i++) err += " ";
-                    throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
+                    let err = "";
+                    for (let i = 0; i < this.current - 1; i++) err += " ";
+                    throw "Unexpected token:\n" + this.str + "\n" + err + "^";
                 }
             }
         }
@@ -128,9 +130,9 @@ class Lexer {
         }
 
         if (this.isAtEnd()) {
-            // let err = "";
-            // for (let i = 0; i < this.current; i++) err += " ";
-            throw "Expected '}':\n" + this.str + "\n" + this.str.substring(0, this.current) + "^";
+            let err = "";
+            for (let i = 0; i < this.current; i++) err += " ";
+            throw "Expected '}':\n" + this.str + "\n" + err + "^";
         }
 
         this.advance();
@@ -165,8 +167,15 @@ class Lexer {
 
             this.addToken(types.FIELD_VALUE, fieldValue);
         }
-        else if (this.str[this.current] === '(' && this.str[this.current - 1] !== ' ') {
-            this.addToken(types.TUPLE_NAME, this.str.substring(this.start, this.current));
+        else if (this.str[this.current] === '(') {
+            let cur = this.str.substring(this.start, this.current).replace(/ /g, '');
+
+            if (cur.toUpperCase() in operators) {
+                this.addToken(types.OPERATOR, cur, cur);
+            }
+            else {
+                this.addToken(types.TUPLE_NAME, cur);
+            }
             this.advance();
             this.start = this.current;
             this.addToken(operators.LEFT_PAREN);
@@ -179,9 +188,9 @@ class Lexer {
         //     this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
         // }
         else {
-            // let err = "";
-            // for (let i = 0; i < this.current - 1; i++) err += " ";
-            throw "Unexpected token:\n" + this.str + "\n" + this.str.substring(0, this.current - 1) + "^";
+            let err = "";
+            for (let i = 0; i < this.current - 1; i++) err += " ";
+            throw "Unexpected token:\n" + this.str + "\n" + err + "^";
         }
     }
 

@@ -322,6 +322,7 @@ class Tuple extends Item {
                 )
             )},
 
+
         {input: '(h:yoda) and(t: g)', output:
             new Binary(
                 new Grouping(
@@ -338,6 +339,16 @@ class Tuple extends Item {
                 new Grouping(
                     new Field('h', 'yoda')
                 )
+            )},
+
+        {input: 'h:yoda or ands     (t: g)', output:
+            new Binary(
+                new Field('h', 'yoda'),
+                new Token('OPERATOR', 'or', 'or'),
+                new Tuple('ands',
+                    new Grouping(
+                        new Field('t', 'g')
+                    ))
             )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {

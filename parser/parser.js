@@ -1,6 +1,3 @@
-// TO DO: tuple name
-// operators keywords
-
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
@@ -210,7 +207,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('((h:yoda)) and((t: g))');
+    let t = new Parser('(login: user or login: user1) and not (with: pp or with: tt)');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {
@@ -221,7 +218,7 @@ try {
 //     try {
 //         let p = new Parser(document.getElementById('query').value);
 //         let res = p.parse();
-//         document.getElementById('result').value = JSON.stringify(res, null, 7);
+//         document.getElementById('result').value = JSON.stringify(res, null, 4);
 //     } catch (e) {
 //         document.getElementById('result').value = e;
 //     }
