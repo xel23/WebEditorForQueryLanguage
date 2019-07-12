@@ -117,7 +117,7 @@ class Parser {
         if (this.match(types.OPERATOR)) {
             let operator = this.previous();
             if (operator.lexeme !== operators.NOT) {
-                throw 'Binary operator must have left expression';
+                throw "Binary operator '" + operator.lexeme + "' must have left expression";
             }
             let right = this.item();
             return new Unary(operator, right);
@@ -132,11 +132,11 @@ class Parser {
 
         if (this.match(operators.LEFT_PAREN)) {
             let expr = this.orExpression();
-            this.consume(operators.RIGHT_PAREN, "Except ')' after expression.");
+            this.consume(operators.RIGHT_PAREN, "SyntaxError: missing ')' after expression.");
             return new Grouping(expr);
         }
 
-        throw "Except expression.";
+        throw "Expect SignExpression after '" + this.tokens[this.current - 1].literal + "'";
     }
 
     match() {
@@ -207,7 +207,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('(login: user or login: user1) and not (with: pp or with: tt)');
+    let t = new Parser('login:user t');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {

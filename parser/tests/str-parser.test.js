@@ -1,15 +1,19 @@
 const parser = require('../parser');
 
 class Token {
-        constructor(type, lexeme, literal) {
-                this.type = type;
-                this.lexeme = lexeme;
-                this.literal = literal;
+    constructor(type, lexeme, literal) {
+        this.type = type;
+        this.lexeme = lexeme;
+        this.literal = literal;
+        if (arguments[3] !== undefined) {
+            this.begin = arguments[3];
+            this.end = arguments[4];
         }
+    }
 
-        toString() {
-                return this.type + " " + this.lexeme + " " + this.literal;
-        }
+    toString() {
+        return this.type + " " + this.lexeme + " " + this.literal;
+    }
 }
 
 class Binary {
@@ -67,7 +71,7 @@ class Tuple extends Item {
         {input: 'login: admin and hasLicense: YouTrack', output:
                 new Binary(
                     new Field('login', 'admin'),
-                    new Token('OPERATOR','and', 'and'),
+                    new Token('OPERATOR','and', 'and', 13, 16),
                     new Field('hasLicense', 'YouTrack')
                 )
         },
@@ -80,7 +84,7 @@ class Tuple extends Item {
         {input: 'login: admin or hasLicense: YouTrack', output:
                 new Binary(
                     new Field('login', 'admin'),
-                    new Token('OPERATOR','or', 'or'),
+                    new Token('OPERATOR','or', 'or', 13, 15),
                     new Field('hasLicense', 'YouTrack')
                 )},
 
@@ -88,10 +92,10 @@ class Tuple extends Item {
         {input: 'login: admin or login: test and hasLicense: YouTrack', output:
                 new Binary(
                     new Field('login', 'admin'),
-                    new Token ('OPERATOR', 'or', 'or'),
+                    new Token ('OPERATOR', 'or', 'or', 13, 15),
                     new Binary(
                         new Field('login', 'test'),
-                        new Token('OPERATOR', 'and', 'and'),
+                        new Token('OPERATOR', 'and', 'and', 28, 31),
                         new Field('hasLicense', 'YouTrack')
                     )
                 )},
@@ -133,19 +137,19 @@ class Tuple extends Item {
         // 11. Not operator with Field
         {input: 'not login: user', output:
                     new Unary(
-                        new Token('OPERATOR', 'not', 'not'),
+                        new Token('OPERATOR', 'not', 'not', 0, 3),
                         new Field('login','user'))},
 
         // 12. Not operator with Field and not operator with Field
         {input: 'not login: user and not login: user1', output:
                     new Binary(
                         new Unary(
-                            new Token('OPERATOR', 'not', 'not'),
+                            new Token('OPERATOR', 'not', 'not', 0, 3),
                             new Field('login', 'user')
                         ),
-                        new Token('OPERATOR', 'and', 'and'),
+                        new Token('OPERATOR', 'and', 'and', 16, 19),
                         new Unary(
-                            new Token('OPERATOR', 'not', 'not'),
+                            new Token('OPERATOR', 'not', 'not', 20, 23),
                             new Field('login', 'user1')
                         )
                     )},
@@ -156,15 +160,15 @@ class Tuple extends Item {
                         new Grouping(
                             new Binary(
                                 new Field('login', 'user'),
-                                new Token('OPERATOR', 'or', 'or'),
+                                new Token('OPERATOR', 'or', 'or', 13, 15),
                                 new Field('login', 'user1')
                             )
                         ),
-                        new Token('OPERATOR', 'and', 'and'),
+                        new Token('OPERATOR', 'and', 'and', 30, 33),
                         new Grouping(
                             new Binary(
                                 new Field('with', 'pp'),
-                                new Token('OPERATOR', 'or', 'or'),
+                                new Token('OPERATOR', 'or', 'or', 44, 46),
                                 new Field('with', 'tt')
                             )
                         )
@@ -176,17 +180,17 @@ class Tuple extends Item {
                         new Grouping(
                             new Binary(
                                 new Field('login', 'user'),
-                                new Token('OPERATOR', 'or', 'or'),
+                                new Token('OPERATOR', 'or', 'or', 13, 15),
                                 new Field('login', 'user1')
                             )
                         ),
-                        new Token('OPERATOR', 'and', 'and'),
+                        new Token('OPERATOR', 'and', 'and', 30, 33),
                         new Unary(
-                            new Token('OPERATOR', 'not', 'not'),
+                            new Token('OPERATOR', 'not', 'not', 34, 37),
                             new Grouping(
                                 new Binary(
                                     new Field('with', 'pp'),
-                                    new Token('OPERATOR', 'or', 'or'),
+                                    new Token('OPERATOR', 'or', 'or', 48, 50),
                                     new Field('with', 'tt')
                                 )
                             )
@@ -199,16 +203,16 @@ class Tuple extends Item {
                 new Grouping(
                     new Binary(
                         new Field('login', 'user'),
-                        new Token('OPERATOR', 'or', 'or'),
+                        new Token('OPERATOR', 'or', 'or', 13, 15),
                         new Field('login', 'user1')
                     )
                 ),
-                new Token('OPERATOR', 'and', 'and'),
+                new Token('OPERATOR', 'and', 'and', 30, 33),
                 new Tuple('accessible',
                     new Grouping(
                         new Binary(
                             new Field('with', 'pp'),
-                            new Token('OPERATOR', 'or', 'or'),
+                            new Token('OPERATOR', 'or', 'or', 54, 56),
                             new Field('with', 'tt')
                         )
                     )
@@ -221,18 +225,18 @@ class Tuple extends Item {
                 new Grouping(
                     new Binary(
                         new Field('login', 'user'),
-                        new Token('OPERATOR', 'or', 'or'),
+                        new Token('OPERATOR', 'or', 'or', 13, 15),
                         new Field('login', 'user1')
                     )
                 ),
-                new Token('OPERATOR', 'and', 'and'),
+                new Token('OPERATOR', 'and', 'and', 30, 33),
                 new Unary(
-                    new Token('OPERATOR', 'not', 'not'),
+                    new Token('OPERATOR', 'not', 'not', 34, 37),
                     new Tuple('accessible',
                         new Grouping(
                             new Binary(
                                 new Field('with', 'pp'),
-                                new Token('OPERATOR', 'or', 'or'),
+                                new Token('OPERATOR', 'or', 'or', 58, 60),
                                 new Field('with', 'tt')
                             )
                         )
@@ -270,10 +274,10 @@ class Tuple extends Item {
             new Binary(
                 new Binary(
                     new Field('login', 'user'),
-                    new Token('OPERATOR', 'and', 'and'),
+                    new Token('OPERATOR', 'and', 'and', 12, 15),
                     new Field('login', 'user1')
                 ),
-                new Token('OPERATOR', 'and', 'and'),
+                new Token('OPERATOR', 'and', 'and', 29, 32),
                 new Field( 'with', 'tt')
             )},
 
@@ -282,10 +286,10 @@ class Tuple extends Item {
             new Binary(
                 new Binary(
                     new Field('login', 'user'),
-                    new Token('OPERATOR', 'or', 'or'),
+                    new Token('OPERATOR', 'or', 'or', 12, 14),
                     new Field('login', 'user1')
                 ),
-                new Token('OPERATOR', 'or', 'or'),
+                new Token('OPERATOR', 'or', 'or', 28, 30),
                 new Field( 'with', 'tt')
             )},
 
@@ -294,16 +298,16 @@ class Tuple extends Item {
             new Binary(
                 new Binary(
                     new Unary(
-                        new Token('OPERATOR', 'not', 'not'),
+                        new Token('OPERATOR', 'not', 'not', 0, 3),
                         new Field('login', 'user')
                     ),
-                    new Token('OPERATOR', 'and', 'and'),
+                    new Token('OPERATOR', 'and', 'and', 16, 19),
                     new Unary(
-                        new Token('OPERATOR', 'not', 'not'),
+                        new Token('OPERATOR', 'not', 'not', 20, 23),
                         new Field('login', 'user1')
                     )
                 ),
-                new Token('OPERATOR', 'or', 'or'),
+                new Token('OPERATOR', 'or', 'or', 37, 39),
                 new Field('login', 'boss')
             )},
 
@@ -311,10 +315,10 @@ class Tuple extends Item {
         {input: 'not login: user and accessible(login: boss)', output:
             new Binary(
                 new Unary(
-                    new Token('OPERATOR', 'not', 'not'),
+                    new Token('OPERATOR', 'not', 'not', 0, 3),
                     new Field('login', 'user')
                 ),
-                new Token('OPERATOR', 'and', 'and'),
+                new Token('OPERATOR', 'and', 'and', 16, 19),
                 new Tuple('accessible',
                     new Grouping(
                         new Field('login', 'boss')
@@ -328,7 +332,7 @@ class Tuple extends Item {
                 new Grouping(
                     new Field('h', 'yoda')
                 ),
-                new Token('OPERATOR', 'and', 'and'),
+                new Token('OPERATOR', 'and', 'and', 9, 11),
                 new Grouping(
                     new Field('t', 'g')
                 )
@@ -344,7 +348,7 @@ class Tuple extends Item {
         {input: 'h:yoda or ands     (t: g)', output:
             new Binary(
                 new Field('h', 'yoda'),
-                new Token('OPERATOR', 'or', 'or'),
+                new Token('OPERATOR', 'or', 'or', 7, 9),
                 new Tuple('ands',
                     new Grouping(
                         new Field('t', 'g')
