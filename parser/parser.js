@@ -1,3 +1,6 @@
+// TO DO: position for all tokens
+// exceptions for parser
+
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
@@ -55,8 +58,18 @@ class Parser {
         this.current = 0;
     }
 
-    parse() {
+    getTree() {
         return this.orExpression();
+    }
+
+    parse() {
+        let tree = this.getTree();
+        // if (this.current < this.tokens.length - 1) {
+        //     throw "Incomplete query after: '" + this.tokens[this.current].literal + "'";
+        // }
+        // else {
+            return tree;
+        // }
     }
 
     orExpression() {
@@ -117,7 +130,7 @@ class Parser {
         if (this.match(types.OPERATOR)) {
             let operator = this.previous();
             if (operator.lexeme !== operators.NOT) {
-                throw "Binary operator '" + operator.lexeme + "' must have left expression";
+                throw "Binary operator '" + operator.start + "' must have left expression";
             }
             let right = this.item();
             return new Unary(operator, right);
@@ -132,11 +145,25 @@ class Parser {
 
         if (this.match(operators.LEFT_PAREN)) {
             let expr = this.orExpression();
-            this.consume(operators.RIGHT_PAREN, "SyntaxError: missing ')' after expression.");
+            if (this.check(operators.RIGHT_PAREN)) this.advance();
+            else {
+                let err = "";
+                for (let i = 0; i < this.str.length; i++) err += " ";
+                throw "SyntaxError: missing ')' after expression:\n" + this.str + "\n" + err + "^";
+            }
+
             return new Grouping(expr);
         }
 
-        throw "Expect SignExpression after '" + this.tokens[this.current - 1].literal + "'";
+        let err = "";
+        if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
+            for (let i = 0; i < this.tokens[this.current - 1].end + 1; i++) err += " ";
+            throw "Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n" + this.str + "\n" +
+            err + "^";
+        } else {
+            for (let i = 0; i < this.str.length; i++) err += " ";
+            throw "Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n" + this.str + "\n" + err + "^";
+        }
     }
 
     match() {
@@ -191,23 +218,25 @@ class Parser {
     peekNext() {
         if (this.tokens[this.current + 1] !== undefined)
             return this.tokens[this.current + 1];
-        else
-            throw "Expect SignExpression after '" + this.tokens[this.current - 1].literal + "'";
+        else {
+            let err = "";
+            for (let i = 0; i < this.tokens[this.current - 1].end + 1; i++) err += " ";
+            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n" + this.str + "\n" +
+            err + "^");
+        }
     }
 
     previous() {
         return this.tokens[this.current - 1];
     }
 
-    consume(type, message) {
-        if (this.check(type)) return this.advance();
-
+    error() {
         throw message;
     }
 }
 
 try {
-    let t = new Parser('login:user t');
+    let t = new Parser('foo(bar: A or bar: B ()');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {
@@ -221,6 +250,8 @@ try {
 //         document.getElementById('result').value = JSON.stringify(res, null, 4);
 //     } catch (e) {
 //         document.getElementById('result').value = e;
+
+// foo(bar: A or bar: B ()
 //     }
 // };
 

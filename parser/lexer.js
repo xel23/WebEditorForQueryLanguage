@@ -48,7 +48,7 @@ class Lexer {
                         this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
                     }
                 }
-                this.addToken(operators.LEFT_PAREN); break;
+                this.addToken(operators.LEFT_PAREN, '('); break;
             }
             case ')': this.addToken(operators.RIGHT_PAREN); break;
             // case '{': this.addToken(types.STRING, this.string()); break;
@@ -58,11 +58,19 @@ class Lexer {
             case '\n':
             case '\r': break;
             default: {
-                if (this.isDigit(c)) {
-                    this.number();
-                } else if (this.isAlpha(c)) {
-                    this.identifier();
-                } else {
+                if (!this.isAtEnd()) {
+                    if (this.isDigit(c)) {
+                        this.number();
+                    } else if (this.isAlpha(c)) {
+                        this.identifier();
+                    }
+                    else {
+                        let err = "";
+                        for (let i = 0; i < this.current - 1; i++) err += " ";
+                        this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+                    }
+                }
+                else {
                     let err = "";
                     for (let i = 0; i < this.current - 1; i++) err += " ";
                     this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
@@ -184,9 +192,9 @@ class Lexer {
             else {
                 this.addToken(types.TUPLE_NAME, cur);
             }
+            this.addToken(operators.LEFT_PAREN, '(');
             this.advance();
             this.start = this.current;
-            this.addToken(operators.LEFT_PAREN);
             this.scanToken();
         }
         else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
@@ -216,6 +224,12 @@ class Lexer {
         }
 
         while (this.isAlphaNumeric(this.peek())) this.advance();
+
+        if (this.start === this.current) {
+            let err = "";
+            for (let i = 0; i < this.current; i++) err += " ";
+            this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+        }
 
         return this.str.substring(this.start, this.current);
     }
