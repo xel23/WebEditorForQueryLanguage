@@ -21,28 +21,37 @@ class Unary {
 }
 
 class Grouping {
-    constructor(expr) {
+    constructor(left, expr, right) {
+        this.left = left;
         this.expr = expr;
+        this.right = right;
     }
-
 }
 
 // Below is parser for Hub query grammar
 class Item {
-    constructor() {}
+    // constructor(begin, end) {
+    //     this.begin = begin;
+    //     this.end = end;
+    // }
+    constructor () {
 
+    }
 }
 
 class Field extends Item {
-    constructor(fieldName, fieldValue) {
+    constructor(fieldName, operator, fieldValue) {
+        // super(begin, end);
         super();
         this.fieldName = fieldName;
+        this.operator = operator;
         this.filedValue = fieldValue;
     }
 }
 
 class Tuple extends Item {
     constructor(tupleName, orExpression) {
+        // super(begin, end);
         super();
         this.tupleName = tupleName;
         this.orExpression = orExpression;
@@ -112,9 +121,9 @@ class Parser {
         let expr = this.unary();
 
         if (this.match(operators.COLON)) {
-            // let operator = this.previous(); tmp disabled
+            let operator = this.previous();
             let right = this.unary();
-            expr = new Field(expr, /*operator,*/ right);
+            expr = new Field(expr, operator, right);
         }
 
         else if(this.match(types.TUPLE_NAME) || this.tokens[this.current - 1].type === types.TUPLE_NAME) {
@@ -141,9 +150,10 @@ class Parser {
 
     primary() {
         if (this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) || this.match(types.TUPLE_NAME) ||
-            this.match(types.STRING)) return this.previous().literal;
+            this.match(types.STRING)) return this.previous();
 
         if (this.match(operators.LEFT_PAREN)) {
+            let left = this.tokens[this.current - 1];
             let expr = this.orExpression();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
@@ -151,8 +161,8 @@ class Parser {
                 for (let i = 0; i < this.str.length; i++) err += " ";
                 throw "SyntaxError: missing ')' after expression:\n" + this.str + "\n" + err + "^";
             }
-
-            return new Grouping(expr);
+            let right = this.tokens[this.current - 1];
+            return new Grouping(left, expr, right);
         }
 
         let err = "";
@@ -235,8 +245,24 @@ class Parser {
     }
 }
 
+class Token {
+    constructor(type, lexeme, literal) {
+        this.type = type;
+        this.lexeme = lexeme;
+        this.literal = literal;
+        if (arguments[3] !== undefined) {
+            this.begin = arguments[3];
+            this.end = arguments[4];
+        }
+    }
+
+    toString() {
+        return this.type + " " + this.lexeme + " " + this.literal;
+    }
+}
+
 try {
-    let t = new Parser('foo(bar: A or bar: B ()');
+    let t = new Parser('accessible(for: admin)');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {

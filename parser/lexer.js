@@ -48,9 +48,9 @@ class Lexer {
                         this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
                     }
                 }
-                this.addToken(operators.LEFT_PAREN, '('); break;
+                this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
             }
-            case ')': this.addToken(operators.RIGHT_PAREN); break;
+            case ')': this.addToken(operators.RIGHT_PAREN, ')', this.start, this.current); break;
             // case '{': this.addToken(types.STRING, this.string()); break;
             // case ',': this.addToken(symbols.COMMA); break;
             case ' ':
@@ -127,7 +127,7 @@ class Lexer {
 
             while (this.isDigit(this.peek())) this.advance();
         }
-        this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)));
+        this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)), this.start, this.current);
     }
 
     peek() {
@@ -174,25 +174,25 @@ class Lexer {
 
         if (this.str[this.current] === ':') {
             let fieldName = this.str.substring(this.start, this.current).replace(/ /g, '');
-            this.addToken(types.FIELD_NAME, fieldName);
+            this.addToken(types.FIELD_NAME, fieldName, this.start, this.current);
 
             this.advance();
-            this.addToken(operators.COLON);
+            this.addToken(operators.COLON, ':', this.tokens[this.tokens.length - 1].end, this.current);
 
             let fieldValue = this.fieldValueIdentifier(this.current);
 
-            this.addToken(types.FIELD_VALUE, fieldValue);
+            this.addToken(types.FIELD_VALUE, fieldValue, this.start, this.current);
         }
         else if (this.str[this.current] === '(') {
             let cur = this.str.substring(this.start, this.current).replace(/ /g, '');
 
             if (cur.toUpperCase() in operators) {
-                this.addToken(types.OPERATOR, cur, this.start, this.current - 1);
+                this.addToken(types.OPERATOR, cur, this.start, this.current);
             }
             else {
-                this.addToken(types.TUPLE_NAME, cur);
+                this.addToken(types.TUPLE_NAME, cur, this.start, this.current);
             }
-            this.addToken(operators.LEFT_PAREN, '(');
+            this.addToken(operators.LEFT_PAREN, '(', this.tokens[this.tokens.length - 1].end, this.current + 1);
             this.advance();
             this.start = this.current;
             this.scanToken();
@@ -244,3 +244,11 @@ class Lexer {
 }
 
 module.exports = Lexer;
+
+try {
+    let t = new Lexer('login: admin or login: test and hasLicense: YouTrack');
+    let p = t.scanTokens();
+    console.log(p);
+} catch (e) {
+    console.log(e);
+}
