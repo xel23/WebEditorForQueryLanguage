@@ -1,5 +1,5 @@
 let operators = require('./operators');
-let symbols = require('./symbols');
+let errorEx = require('./syntaxException');
 let types = require('./types');
 
 class Token {
@@ -154,10 +154,10 @@ class Lexer {
     }
 
     identifier() {
-        while (this.peek() === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
-            this.advance();
-            this.start = this.current;
-        }
+        // while (this.str[this.current] === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
+        //     this.advance();
+        //     this.start = this.current;
+        // }
 
 
         while (this.isAlphaNumeric(this.peek())) this.advance();
@@ -229,9 +229,7 @@ class Lexer {
     }
 
     error(message, n) {
-        let err = "";
-        for (let i = 0; i < n; i++) err += " ";
-        throw message + this.str + "\n" + err + "^";
+        new errorEx(message, n, this.str);
     }
 }
 

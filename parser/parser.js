@@ -4,6 +4,7 @@
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
+let errorEx = require('./syntaxException');
 
 class Binary {
     constructor(left, operator, right) {
@@ -232,14 +233,12 @@ class Parser {
     }
 
     error(message, n) {
-        let err = "";
-        for (let i = 0; i < n; i++) err += " ";
-        throw message + "'\n" + this.str + "\n" + err + "^";
+        new errorEx(message, n, this.str);
     }
 }
 
 // try {
-//     let t = new Parser('(login: user or login: user1) and accessible(with: pp or with: tt)');
+//     let t = new Parser('test:kk l or t:t');
 //     let checking = t.parse();
 //     console.log(checking);
 // } catch(e) {
