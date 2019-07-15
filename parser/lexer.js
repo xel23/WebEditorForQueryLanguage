@@ -65,15 +65,11 @@ class Lexer {
                         this.identifier();
                     }
                     else {
-                        let err = "";
-                        for (let i = 0; i < this.current - 1; i++) err += " ";
-                        this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+                        this.error("Unexpected token switch1:\n", this.current - 1);
                     }
                 }
                 else {
-                    let err = "";
-                    for (let i = 0; i < this.current - 1; i++) err += " ";
-                    this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+                    this.error("Unexpected token switch2:\n",this.current - 1);
                 }
             }
         }
@@ -146,9 +142,7 @@ class Lexer {
         }
 
         if (this.isAtEnd()) {
-            let err = "";
-            for (let i = 0; i < this.current; i++) err += " ";
-            this.error("SyntaxError: missing '}' after word list:\n" + this.str + "\n" + err + "^");
+            this.error("SyntaxError: missing '}' after word list:\n", this.current);
         }
 
         this.advance();
@@ -204,9 +198,7 @@ class Lexer {
         //     this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
         // }
         else {
-            let err = "";
-            for (let i = 0; i < this.current; i++) err += " ";
-            this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+            this.error("Unexpected token identifier:\n", this.start);
         }
     }
 
@@ -226,9 +218,7 @@ class Lexer {
         while (this.isAlphaNumeric(this.peek())) this.advance();
 
         if (this.start === this.current) {
-            let err = "";
-            for (let i = 0; i < this.current; i++) err += " ";
-            this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+            this.error("Unexpected token fieldValueIdentifier:\n", this.start);
         }
 
         return this.str.substring(this.start, this.current);
@@ -238,8 +228,10 @@ class Lexer {
         return this.isDigit(c) || this.isAlpha(c);
     }
 
-    error(message) {
-        throw message;
+    error(message, n) {
+        let err = "";
+        for (let i = 0; i < n; i++) err += " ";
+        throw message + this.str + "\n" + err + "^";
     }
 }
 
