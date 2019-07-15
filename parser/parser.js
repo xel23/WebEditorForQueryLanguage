@@ -226,18 +226,18 @@ class Parser {
     }
 }
 
-document.getElementById('query').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('query').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-    } catch (e) {
-        if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
-        } else {
-            document.getElementById('result').value = 'Empty query';
-        }
-    }
-};
+// document.getElementById('query').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('query').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 4);
+//     } catch (e) {
+//         if (e instanceof errorEx) {
+//             document.getElementById('result').value = e;
+//         } else {
+//             document.getElementById('result').value = 'Empty query';
+//         }
+//     }
+// };
 
 module.exports = Parser;

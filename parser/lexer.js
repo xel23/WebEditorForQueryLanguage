@@ -43,23 +43,41 @@ class Lexer {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type !== types.TUPLE_NAME && this.str[this.current - 2]
                         !== ' ' && this.str[this.current - 1] !== '(') {
-                        let err = "";
-                        for (let i = 0; i < this.current - 1; i++) err += " ";
-                        this.error("Unexpected token:\n" + this.str + "\n" + err + "^");
+                        this.error("Unexpected token:\n", this.current);
                     }
                 }
                 this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
             }
             case ')': this.addToken(operators.RIGHT_PAREN, ')', this.start, this.current); break;
+            case '{': {
+                let cur = this.stringBrace();
+                this.addToken('COMPLEX_VALUE', cur, this.start, this.current);
+                break;
+            }
+            case '\-': this.addToken('\-', '\-', this.start, this.current); break;
+            case '#': this.addToken('#', '#', this.start, this.current); break;
+            case '"': {
+                let cur =  this.stringQuote();
+                this.addToken('QUOTED_TEXT', cur, this.start, this.current);
+                break;
+            }
+            case ':': this.addToken(':', ':', this.start, this.current); break;
+            case '.': {
+                if (this.str[this.current] !== '.') {
+                    this.error("Unexpected token:\n", this.current - 1);
+                } else {
+                    this.advance();
+                    this.addToken('..', '..', this.start, this.current);
+                }
+                break;
+            }
             case ' ':
             case '\t':
             case '\n':
             case '\r': break;
             default: {
                 if (!this.isAtEnd()) {
-                    if (this.isDigit(c)) {
-                        this.number();
-                    } else if (this.isAlpha(c)) {
+                    if (this.isAlphaNumeric(c)) {
                         this.identifier();
                     }
                     else {
@@ -106,33 +124,46 @@ class Lexer {
         return /[\d]/.test(c);
     };
 
-    number() {
-        while (this.isDigit(this.peek())) this.advance();
-        if (this.peek() === '.' && this.isDigit(this.peekNext())) {
-            this.advance();
-
-            while (this.isDigit(this.peek())) this.advance();
-        }
-        this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)), this.start, this.current);
-    }
+    // number() {
+    //     while (this.isDigit(this.peek())) this.advance();
+    //     if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+    //         this.advance();
+    //
+    //         while (this.isDigit(this.peek())) this.advance();
+    //     }
+    //     this.addToken('NUMBER', parseFloat(this.str.substring(this.start, this.current)), this.start, this.current);
+    // }
 
     peek() {
         if (this.isAtEnd()) return '\0';
         return this.str[this.current];
     }
 
-    peekNext() {
-        if (this.current + 1 >= this.str.length) return '\0';
-        return this.str[this.current + 1];
-    }
+    // peekNext() {
+    //     if (this.current + 1 >= this.str.length) return '\0';
+    //     return this.str[this.current + 1];
+    // }
 
-    string() {
+    stringBrace() {
         while (this.peek() !== '}' && !this.isAtEnd()) {
             this.advance();
         }
 
         if (this.isAtEnd()) {
-            this.error("SyntaxError: missing '}' after word list:\n", this.current);
+            this.error("SyntaxError: missing '}':\n", this.current);
+        }
+
+        this.advance();
+        return this.str.substring(this.start + 1, this.current - 1);
+    }
+
+    stringQuote() {
+        while (this.peek() !== '"' && !this.isAtEnd()) {
+            this.advance();
+        }
+
+        if (this.isAtEnd()) {
+            this.error("SyntaxError: missing '\"':\n", this.current);
         }
 
         this.advance();
@@ -140,7 +171,7 @@ class Lexer {
     }
 
     isAlpha(c) {
-        return /[a-zA-Z_\-]/.test(c);
+        return /[a-zA-Z_\-*?]/.test(c);
     }
 
     identifier() {
@@ -150,60 +181,62 @@ class Lexer {
             this.advance();
         }
 
-        if (this.str[this.current] === ':') {
-            let fieldName = this.str.substring(this.start, this.current).replace(/ /g, '');
-            this.addToken(types.FIELD_NAME, fieldName, this.start, this.current);
+        // if (this.str[this.current] === ':') {
+        //     let fieldName = this.str.substring(this.start, this.current).replace(/ /g, '');
+        //     this.addToken(types.FIELD_NAME, fieldName, this.start, this.current);
+        //
+        //     this.advance();
+        //     this.addToken(operators.COLON, ':', this.tokens[this.tokens.length - 1].end, this.current);
+        //
+        //     let fieldValue = this.fieldValueIdentifier(this.current);
+        //
+        //     this.addToken(types.FIELD_VALUE, fieldValue, this.start, this.current);
+        // }
+        // else if (this.str[this.current] === '(') {
+        //     let cur = this.str.substring(this.start, this.current).replace(/ /g, '');
+        //
+        //     if (cur.toUpperCase() in operators) {
+        //         this.addToken(types.OPERATOR, cur, this.start, this.current);
+        //     }
+        //     else {
+        //         this.addToken(types.TUPLE_NAME, cur, this.start, this.current);
+        //     }
+        //     this.addToken(operators.LEFT_PAREN, '(', this.tokens[this.tokens.length - 1].end, this.current + 1);
+        //     this.advance();
+        //     this.start = this.current;
+        //     this.scanToken();
+        // }
+        // else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
+        //     this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''), this.start, this.current - 1);
+        // }
+        // else {
+        //     this.error("Unexpected token identifier:\n", this.start);
+        // }
 
-            this.advance();
-            this.addToken(operators.COLON, ':', this.tokens[this.tokens.length - 1].end, this.current);
-
-            let fieldValue = this.fieldValueIdentifier(this.current);
-
-            this.addToken(types.FIELD_VALUE, fieldValue, this.start, this.current);
-        }
-        else if (this.str[this.current] === '(') {
-            let cur = this.str.substring(this.start, this.current).replace(/ /g, '');
-
-            if (cur.toUpperCase() in operators) {
-                this.addToken(types.OPERATOR, cur, this.start, this.current);
-            }
-            else {
-                this.addToken(types.TUPLE_NAME, cur, this.start, this.current);
-            }
-            this.addToken(operators.LEFT_PAREN, '(', this.tokens[this.tokens.length - 1].end, this.current + 1);
-            this.advance();
-            this.start = this.current;
-            this.scanToken();
-        }
-        else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
-            this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''), this.start, this.current - 1);
-        }
-        else {
-            this.error("Unexpected token identifier:\n", this.start);
-        }
+        this.addToken('WORD', this.str.substring(this.start, this.current).replace(/ /g, ''), this.start, this.current);
     }
 
-    fieldValueIdentifier() {
-        this.start = this.current;
-        while (this.peek() === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
-            this.advance();
-            this.start = this.current;
-        }
-
-        let cur;
-        if (this.peek() === '{') {
-            cur = this.string();
-            return cur;
-        }
-
-        while (this.isAlphaNumeric(this.peek())) this.advance();
-
-        if (this.start === this.current) {
-            this.error("Unexpected token fieldValueIdentifier:\n", this.start);
-        }
-
-        return this.str.substring(this.start, this.current);
-    }
+    // fieldValueIdentifier() {
+    //     this.start = this.current;
+    //     while (this.peek() === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
+    //         this.advance();
+    //         this.start = this.current;
+    //     }
+    //
+    //     let cur;
+    //     if (this.peek() === '{') {
+    //         cur = this.stringBrace();
+    //         return cur;
+    //     }
+    //
+    //     while (this.isAlphaNumeric(this.peek())) this.advance();
+    //
+    //     if (this.start === this.current) {
+    //         this.error("Unexpected token fieldValueIdentifier:\n", this.start);
+    //     }
+    //
+    //     return this.str.substring(this.start, this.current);
+    // }
 
     isAlphaNumeric(c) {
         return this.isDigit(c) || this.isAlpha(c);
@@ -215,3 +248,11 @@ class Lexer {
 }
 
 module.exports = Lexer;
+
+try {
+    let t = new Lexer('Board YouTrack Scrum: {sprint 21}');
+    let res = t.scanTokens();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
