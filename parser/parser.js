@@ -262,7 +262,7 @@ class Token {
 }
 
 try {
-    let t = new Parser('accessible(for: admin)');
+    let t = new Parser('(login: user or login: user1) and accessible(with: pp or with: tt)');
     let checking = t.parse();
     console.log(checking);
 } catch(e) {

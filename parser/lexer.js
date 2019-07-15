@@ -244,11 +244,3 @@ class Lexer {
 }
 
 module.exports = Lexer;
-
-try {
-    let t = new Lexer('login: admin or login: test and hasLicense: YouTrack');
-    let p = t.scanTokens();
-    console.log(p);
-} catch (e) {
-    console.log(e);
-}
