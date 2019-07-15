@@ -60,7 +60,7 @@ class Tuple extends Item {
             this.orExpression = orExpression;
     }
 }
-        // 1. Field only
+
 [       {input: 'login: admin', output:
                 new Field(
                     new Token('FIELD_NAME', 'login', 'login', 0, 5),
@@ -68,7 +68,7 @@ class Tuple extends Item {
                     new Token('FIELD_VALUE', 'admin', 'admin', 7, 12)
                 )},
 
-        // 2. Tuple only
+
         {input: 'accessible(for: admin)', output:
                 new Tuple(
                     new Token('TUPLE_NAME', 'accessible', 'accessible', 0, 10),
@@ -83,7 +83,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 3. 2 Fields with 'and'
+
         {input: 'login: admin and hasLicense: YouTrack', output:
                 new Binary(
                     new Field(
@@ -100,7 +100,7 @@ class Tuple extends Item {
                 )
         },
 
-        // 4. Field with long value
+
         {input: 'login: {new name}', output:
                 new Field(
                     new Token('FIELD_NAME', 'login', 'login', 0, 5),
@@ -108,7 +108,7 @@ class Tuple extends Item {
                     new Token('FIELD_VALUE', 'new name', 'new name', 7, 17)
                 )},
 
-        // 5. 2 Fields with 'or'
+
         {input: 'login: admin or hasLicense: YouTrack', output:
                 new Binary(
                     new Field(
@@ -124,7 +124,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 6. 3 Fields with 'and' and 'or' operators
+
         {input: 'login: admin or login: test and hasLicense: YouTrack', output:
                 new Binary(
                     new Field(
@@ -148,7 +148,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 7. Tuple with Filed with long value
+
         {input: 'accessible(for: {Yoda master})', output:
                 new Tuple(
                     new Token('TUPLE_NAME', 'accessible', 'accessible', 0, 10),
@@ -162,7 +162,7 @@ class Tuple extends Item {
                         new Token(')', ')', ')', 29, 30)
                     ))},
 
-        // 8. Tuple between parentheses
+
         {input: '(accessible(for: Yoda))', output:
                 new Grouping(
                     new Token('(', '(', '(', 0, 1),
@@ -181,7 +181,7 @@ class Tuple extends Item {
                     new Token(')', ')', ')', 22, 23)
                 )},
 
-        // 9. Field between parentheses
+
         {input: '(login: user)', output:
                 new Grouping(
                     new Token('(', '(', '(', 0, 1),
@@ -193,21 +193,7 @@ class Tuple extends Item {
                     new Token(')', ')', ')', 12, 13)
                 )},
 
-        // 10. Field + 'and' + 2 Fields between parentheses
-        // {input: 'login: user and (name: Ivan, with: test)', output:
-        //             new Binary(
-        //                 new Field('login', 'user'),
-        //                 new Token('OPERATOR', 'and', 'and'),
-        //                 new Grouping(
-        //                     new Binary(
-        //                         new Field('name', 'Ivan'),
-        //                         new Token(',', null, undefined),
-        //                         new Field('with', 'test')
-        //                     )
-        //                 )
-        //             )},
 
-        // 11. Not operator with Field
         {input: 'not login: user', output:
                 new Unary(
                     new Token('OPERATOR', 'not', 'not', 0, 3),
@@ -218,7 +204,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 12. Not operator with Field and not operator with Field
+
         {input: 'not login: user and not login: user1', output:
                 new Binary(
                     new Unary(
@@ -240,7 +226,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 13. 2 Fields between or between parentheses and 2 Fields between or between parentheses
+
         {input: '(login: user or login: user1) and (with: pp or with: tt)', output:
                 new Binary(
                     new Grouping(
@@ -280,7 +266,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 14. 13 with operator not
+
         {input: '(login: user or login: user1) and not (with: pp or with: tt)', output:
                 new Binary(
                     new Grouping(
@@ -323,7 +309,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 15. 14 with Tuple
+
         {input: '(login: user or login: user1) and accessible(with: pp or with: tt)', output:
                 new Binary(
                     new Grouping(
@@ -366,7 +352,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 16. 15 with not operator
+
         {input: '(login: user or login: user1) and not accessible(with: pp or with: tt)', output:
                 new Binary(
                     new Grouping(
@@ -412,32 +398,7 @@ class Tuple extends Item {
                     )
                 )},
 
-        // 17. 16 + comma
-        // {input: '(login: user or login: user1) and not accessible(with: pp, comma: tqt)', output:
-        //     new Binary(
-        //         new Grouping(
-        //             new Binary(
-        //                 new Field('login', 'user'),
-        //                 new Token('OPERATOR', 'or', 'or'),
-        //                 new Field('login', 'user1')
-        //             )
-        //         ),
-        //         new Token('OPERATOR', 'and', 'and'),
-        //         new Unary(
-        //             new Token('OPERATOR', 'not', 'not'),
-        //             new Tuple('accessible',
-        //                 new Grouping(
-        //                     new Binary(
-        //                         new Field('with', 'pp'),
-        //                         new Token(',', null, undefined),
-        //                         new Field('comma', 'tqt')
-        //                     )
-        //                 )
-        //             )
-        //         )
-        //     )},
 
-        // 18. many ands
         {input: 'login: user and login: user1 and with: tt', output:
             new Binary(
                 new Binary(
@@ -461,7 +422,7 @@ class Tuple extends Item {
                 )
             )},
 
-        // 19. many ors
+
         {input: 'login: user or login: user1 or with: tt', output:
             new Binary(
                 new Binary(
@@ -485,7 +446,7 @@ class Tuple extends Item {
                 )
             )},
 
-        // 20. Checking priority of operators
+
         {input: 'not login: user and not login: user1 or login: boss', output:
             new Binary(
                 new Binary(
@@ -515,7 +476,7 @@ class Tuple extends Item {
                 )
             )},
 
-        // 21. Tuple after operator
+
         {input: 'not login: user and accessible(login: boss)', output:
                 new Binary(
                     new Unary(

@@ -51,8 +51,6 @@ class Lexer {
                 this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
             }
             case ')': this.addToken(operators.RIGHT_PAREN, ')', this.start, this.current); break;
-            // case '{': this.addToken(types.STRING, this.string()); break;
-            // case ',': this.addToken(symbols.COMMA); break;
             case ' ':
             case '\t':
             case '\n':
@@ -104,14 +102,6 @@ class Lexer {
 
     }
 
-    match(expected) {
-        if (this.isAtEnd()) return false;
-        if (this.str[this.current] !== expected) return false;
-
-        this.current++;
-        return true;
-    }
-
     isDigit(c) {
         return /[\d]/.test(c);
     };
@@ -154,12 +144,6 @@ class Lexer {
     }
 
     identifier() {
-        // while (this.str[this.current] === ' ' || this.peek() === '\t' || this.peek() === '\n' || this.peek() === '\r') {
-        //     this.advance();
-        //     this.start = this.current;
-        // }
-
-
         while (this.isAlphaNumeric(this.peek())) this.advance();
 
         while(this.str[this.current] === ' ') {
@@ -194,9 +178,6 @@ class Lexer {
         else if (this.str.substring(this.start, this.current).replace(/ /g, '').toUpperCase() in operators) {
             this.addToken(types.OPERATOR, this.str.substring(this.start, this.current).replace(/ /g, ''), this.start, this.current - 1);
         }
-        // else if (this.tokens[this.tokens.length - 1].type === symbols.COMMA) {
-        //     this.addToken(types.FIELD_VALUE, this.str.substring(this.start, this.current).replace(/ /g, ''));
-        // }
         else {
             this.error("Unexpected token identifier:\n", this.start);
         }

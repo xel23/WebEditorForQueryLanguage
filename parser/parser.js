@@ -1,6 +1,3 @@
-// TO DO: position for all tokens
-// exceptions for parser
-
 let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
@@ -29,12 +26,7 @@ class Grouping {
     }
 }
 
-// Below is parser for Hub query grammar
 class Item {
-    // constructor(begin, end) {
-    //     this.begin = begin;
-    //     this.end = end;
-    // }
     constructor () {
 
     }
@@ -42,7 +34,6 @@ class Item {
 
 class Field extends Item {
     constructor(fieldName, operator, fieldValue) {
-        // super(begin, end);
         super();
         this.fieldName = fieldName;
         this.operator = operator;
@@ -52,7 +43,6 @@ class Field extends Item {
 
 class Tuple extends Item {
     constructor(tupleName, orExpression) {
-        // super(begin, end);
         super();
         this.tupleName = tupleName;
         this.orExpression = orExpression;
@@ -75,7 +65,7 @@ class Parser {
     parse() {
         let tree = this.getTree();
         if (this.current < this.tokens.length - 1) {
-            this.error("Incomplete query after: '" + this.tokens[this.current].literal + "'", this.tokens[this.current - 1].end);
+            this.error("Incomplete query after: '" + this.tokens[this.current - 1].literal + "'\n", this.tokens[this.current - 1].end);
         }
         else {
             return tree;
@@ -128,9 +118,8 @@ class Parser {
         }
 
         else if(this.match(types.TUPLE_NAME) || this.tokens[this.current - 1].type === types.TUPLE_NAME) {
-            // let operator = this.previous();
             let right = this.unary();
-            expr = new Tuple(expr, /*operator,*/ right);
+            expr = new Tuple(expr, right);
         }
 
         return expr;
@@ -140,7 +129,7 @@ class Parser {
         if (this.match(types.OPERATOR)) {
             let operator = this.previous();
             if (operator.lexeme !== operators.NOT) {
-                this.error("Binary operator '" + operator.lexeme + "' must have left expression", operator.begin);
+                this.error("Binary operator '" + operator.lexeme + "' must have left expression\n", operator.begin);
             }
             let right = this.item();
             return new Unary(operator, right);
@@ -158,16 +147,16 @@ class Parser {
             let expr = this.orExpression();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
-                this.error("SyntaxError: missing ')' after expression:", this.str.length);
+                this.error("SyntaxError: missing ')' after expression:\n", this.str.length);
             }
             let right = this.tokens[this.current - 1];
             return new Grouping(left, expr, right);
         }
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme, this.tokens[this.current - 1].end + 1);
+            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
         } else {
-            this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme, this.str.length);
+            this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
         }
     }
 
@@ -224,7 +213,7 @@ class Parser {
         if (this.tokens[this.current + 1] !== undefined)
             return this.tokens[this.current + 1];
         else {
-            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme, this.tokens[this.current - 1].end + 1);
+            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
         }
     }
 
@@ -237,21 +226,17 @@ class Parser {
     }
 }
 
-// try {
-//     let t = new Parser('test:kk l or t:t');
-//     let checking = t.parse();
-//     console.log(checking);
-// } catch(e) {
-//     console.log(e);
-// }
-
 document.getElementById('query').oninput = function () {
     try {
         let p = new Parser(document.getElementById('query').value);
         let res = p.parse();
         document.getElementById('result').value = JSON.stringify(res, null, 4);
     } catch (e) {
-        document.getElementById('result').value = e;
+        if (e instanceof errorEx) {
+            document.getElementById('result').value = e;
+        } else {
+            document.getElementById('result').value = 'Empty query';
+        }
     }
 };
 
