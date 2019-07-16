@@ -71,6 +71,8 @@ class Lexer {
                 }
                 break;
             }
+            // case '*': this.addToken('*', '*', this.start, this.current); break;
+            case ',': this.addToken(''); break; // ->>>
             case ' ':
             case '\t':
             case '\n':
@@ -250,7 +252,7 @@ class Lexer {
 module.exports = Lexer;
 
 try {
-    let t = new Lexer('Board YouTrack Scrum: {sprint 21}');
+    let t = new Lexer(' #bug by: yarko -minor -normal');
     let res = t.scanTokens();
     console.log(res);
 } catch (e) {

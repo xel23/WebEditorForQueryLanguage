@@ -226,6 +226,14 @@ class Parser {
     }
 }
 
+try {
+    let t = new Parser('');
+    let res = t.parse();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
+
 // document.getElementById('query').oninput = function () {
 //     try {
 //         let p = new Parser(document.getElementById('query').value);
