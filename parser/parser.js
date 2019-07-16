@@ -2,6 +2,15 @@ let lexer = require('./lexer');
 let operators = require('./operators');
 let types = require('./types');
 let errorEx = require('./syntaxException');
+let Token = require('./token');
+let singleWordHelper = require('./singleWordHelper');
+let doubleWordHelper = require('./doubleWordHelper');
+let timeTracking = require('./timeTracking');
+let sortAttribute = require('./sortAttribute');
+let customField = require('./customField');
+let keyword = require('./keyword');
+let issueAttribute = require('./issueAttribute');
+let issueLink = require('./issueLink');
 
 class Binary {
     constructor(left, operator, right) {
@@ -26,26 +35,125 @@ class Grouping {
     }
 }
 
-class Item {
-    constructor () {
+class TermItem {
+    constructor () {}
+}
 
+class QuotedText extends TermItem {
+    constructor(leftQuote, text, rightQoute) {
+        super();
+        this.leftQuote = leftQuote;
+        this.text = text;
+        this.rightQoute = rightQoute;
     }
 }
 
-class Field extends Item {
-    constructor(fieldName, operator, fieldValue) {
+class NegativeText extends TermItem {
+    constructor(minus, leftQuote, text, rightQoute) {
         super();
-        this.fieldName = fieldName;
+        this.minus = minus;
+        this.text = new QuotedText(leftQuote, text, rightQoute);
+    }
+}
+
+class Value extends TermItem {
+    constructor(value) {
+        super();
+        this.value = value;
+    }
+}
+
+class SingleValue extends Value {
+    constructor(value) {
+        super(value);
+    }
+}
+
+class PositiveSingleValue extends TermItem {
+    constructor(lat, value) {
+        super();
+        this.lat = lat;
+        this.value = new SingleValue(value);
+    }
+}
+
+class NegativeSingleValue extends TermItem {
+    constructor(minus, value) {
+        super();
+        this.minus = minus;
+        this.value = new SingleValue(value);
+    }
+}
+
+class ValueRange {
+    constructor(leftVal, operator, rightVal) {
+        this.leftVal = new Value(leftVal);
         this.operator = operator;
-        this.filedValue = fieldValue;
+        this.rightVal = new Value(rightVal);
     }
 }
 
-class Tuple extends Item {
-    constructor(tupleName, orExpression) {
+class AttributeFilter {
+    constructor(operator, value) {
+        this.operator = operator;
+        if (value instanceof Value) {
+            this.value = new Value(value);
+        }
+        else {
+            this.value = new ValueRange(value);
+        }
+    }
+}
+
+class Attribute {
+    constructor(value) {
+        this.value = value;
+    }
+}
+
+class Has extends TermItem {
+    constructor(has, operator, value) {
         super();
-        this.tupleName = tupleName;
-        this.orExpression = orExpression;
+        this.attribute = new Attribute(value);
+        this.has = has;
+        this.operator = operator;
+    }
+}
+
+class CategorizedFilter extends TermItem {
+    constructor(attribute, operator, attributeFilter) {
+        super();
+        this.attribute = new Attribute(attribute);
+        this.operator = operator;
+        this.attributeFilter = new AttributeFilter(attributeFilter);
+    }
+}
+
+class Text extends TermItem {
+    constructor(text) {
+        super();
+        this.text = text;
+    }
+}
+
+class SortAttribute {
+    constructor(value, order) {
+        this.value = value;
+        this.order = order;
+    }
+}
+
+class SortField {
+    constructor(value) {
+        this.sortAttribute = value;
+    }
+}
+
+class Sort extends TermItem {
+    constructor(sortBy, value) {
+        super();
+        this.sortBy = sortBy;
+        this.value = new SortField(value);
     }
 }
 
@@ -85,23 +193,23 @@ class Parser {
     }
 
     andExpression() {
-        let expr = this.signExpression();
+        let expr = this.andOperand();
 
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
-            let right = this.signExpression();
+            let right = this.andOperand();
             expr = new Binary(expr, operator, right);
         }
 
         return expr;
     }
 
-    signExpression() {
+    andOperand() {
         let expr = this.item();
 
-        while (this.matchOperator(operators.NOT)) {
-            let operator = this.previous();
-            let right = this.item();
+        while (this.match(types.WORD)) {
+            let operator = new Token(types.OPERATOR, 'and', 'and');
+            let right = this.item(operator);
             expr = new Binary(expr, operator, right);
         }
 
@@ -109,12 +217,19 @@ class Parser {
     }
 
     item() {
-        let expr = this.unary();
+        let expr;
+        if (arguments[0] !== undefined) {
+            expr = this.unary(arguments[0]);
+        }
+        else {
+            expr = this.unary();
+        }
 
         if (this.match(operators.COLON)) {
             let operator = this.previous();
             let right = this.unary();
-            expr = new Field(expr, operator, right);
+            expr = new CategorizedFilter(expr, operator, right);
+            // TO DO: multiple attribute filters (handle comma)
         }
 
         else if(this.match(types.TUPLE_NAME) || this.tokens[this.current - 1].type === types.TUPLE_NAME) {
@@ -126,24 +241,74 @@ class Parser {
     }
 
     unary() {
-        if (this.match(types.OPERATOR)) {
+        if (this.match('#') || this.match('\-')) {
             let operator = this.previous();
-            if (operator.lexeme !== operators.NOT) {
-                this.error("Binary operator '" + operator.lexeme + "' must have left expression\n", operator.begin);
-            }
             let right = this.item();
             return new Unary(operator, right);
         }
 
-        return this.primary();
+        if (arguments[0] !== undefined) {
+            return this.primary(arguments[0])
+        }
+        else {
+            return this.primary()
+        }
     }
 
     primary() {
-        if (this.match(types.FIELD_NAME) || this.match(types.FIELD_VALUE) || this.match(types.TUPLE_NAME) ||
-            this.match(types.STRING)) return this.previous();
+        if (this.match(types.WORD)) {
+            if (!this.isAtEnd()) {
+                if (this.peek().type === operators.COLON || arguments[0] !== undefined ||
+                    this.previous().type === ':') return this.previous();
+
+                if (this.tokens[this.current - 1].lexeme.toLowerCase() in singleWordHelper) {
+                    let newLongWord = this.previous();
+                    let secondWord = this.advance();
+                    newLongWord.lexeme += ' ' + secondWord.lexeme;
+                    newLongWord.literal += ' ' + secondWord.literal;
+                    newLongWord.end = secondWord.end;
+                    if (newLongWord.lexeme.toLowerCase() in timeTracking ||
+                        newLongWord.lexeme.toLowerCase() in sortAttribute ||
+                        newLongWord.lexeme.toLowerCase() in customField ||
+                        newLongWord.lexeme.toLowerCase() in issueAttribute ||
+                        newLongWord.lexeme.toLowerCase() in issueLink) {
+                        return newLongWord;
+                    }
+                    else if (newLongWord.lexeme.toLowerCase() in doubleWordHelper) {
+                        if (!this.isAtEnd()) {
+                            let thirdWord = this.advance();
+                            newLongWord.lexeme += ' ' + thirdWord.lexeme;
+                            newLongWord.literal += ' ' + thirdWord.literal;
+                            newLongWord.end = thirdWord.end;
+                            if (newLongWord.lexeme.toLowerCase() in customField ||
+                                newLongWord.lexeme.toLowerCase() in issueLink) {
+                                return newLongWord;
+                            }
+                            else {
+                                this.error("Unexpected token:\n", thirdWord.begin);
+                            }
+                        } else {
+                            this.error("Unexpected end:\n", newLongWord.end + 1);
+                        }
+                    }
+                    else {
+                        this.error("Unexpected token:\n", secondWord.begin);
+                    }
+                }
+                else {
+                    this.error("Unexpected token:\n", this.tokens[this.current + 1].end);
+                }
+            }
+            else if (this.current - 2 >= 0) {
+                if (this.tokens[this.current - 2].type === ':') return this.previous();
+            }
+            else {
+                this.error("Unexpected end:\n", this.previous().end + 1);
+            }
+        }
 
         if (this.match(operators.LEFT_PAREN)) {
-            let left = this.tokens[this.current - 1];
+            let left = this.previous();
             let expr = this.orExpression();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
@@ -154,7 +319,7 @@ class Parser {
         }
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
+            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
         } else {
             this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
         }
@@ -227,7 +392,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('');
+    let t = new Parser('"is duplicated by: gg"');
     let res = t.parse();
     console.log(res);
 } catch (e) {

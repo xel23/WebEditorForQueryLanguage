@@ -2,15 +2,14 @@ const types = Object.freeze({
     TRUE: true,          // 0
     FALSE: false,        // 1
     NULL: null,          // 2
-    NUMBER: 'NUMBER',    // 3
-    STRING: 'STRING',
-    IDENTIFIER: 'IDENTIFIER',
-    KEYWORD: 'KEYWORD',
-    FIELD_NAME: 'FIELD_NAME',
-    FIELD_VALUE: 'FIELD_VALUE',
-    TUPLE_NAME: 'TUPLE_NAME',
-    FIELD: 'FIELD',
-    OPERATOR: 'OPERATOR',
+    WORD: 'WORD',
+    COMPLEX_VALUE: 'COMPLEX_VALUE',
+    SIMPLE_VALUE: 'SIMPLE_VALUE',
+    QUOTED_TEXT: 'QUOTED_TEXT',
+    ATTRIBUTE: 'ATTRIBUTE',
+    SORT_ATTRIBUTE: 'SORT_ATTRIBUTE',
+    SINGLE_VALUE: 'SINGLE_VALUE',
+    OPERATOR: 'OPERATOR'
 });
 
 module.exports = types;

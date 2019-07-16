@@ -1,22 +1,7 @@
 let operators = require('./operators');
 let errorEx = require('./syntaxException');
 let types = require('./types');
-
-class Token {
-    constructor(type, lexeme, literal) {
-        this.type = type;
-        this.lexeme = lexeme;
-        this.literal = literal;
-        if (arguments[3] !== undefined) {
-            this.begin = arguments[3];
-            this.end = arguments[4];
-        }
-    }
-
-    toString() {
-        return this.type + " " + this.lexeme + " " + this.literal;
-    }
-}
+let Token = require('./token');
 
 class Lexer {
     constructor(str) {
@@ -251,10 +236,10 @@ class Lexer {
 
 module.exports = Lexer;
 
-try {
-    let t = new Lexer(' #bug by: yarko -minor -normal');
-    let res = t.scanTokens();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Lexer(' #bug by: yarko -minor -normal');
+//     let res = t.scanTokens();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
