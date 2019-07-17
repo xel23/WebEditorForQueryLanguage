@@ -36,126 +36,147 @@ class Grouping {
 }
 
 class TermItem {
-    constructor () {}
-}
-
-class QuotedText extends TermItem {
-    constructor(leftQuote, text, rightQoute) {
-        super();
-        this.leftQuote = leftQuote;
-        this.text = text;
-        this.rightQoute = rightQoute;
+    constructor (type, being, end) {
+        this.type = type;
+        this.begin = being;
+        this.end = end;
     }
 }
 
-class NegativeText extends TermItem {
-    constructor(minus, leftQuote, text, rightQoute) {
-        super();
-        this.minus = minus;
-        this.text = new QuotedText(leftQuote, text, rightQoute);
-    }
-}
+// class QuotedText extends TermItem {
+//     constructor(leftQuote, text, rightQoute) {
+//         super();
+//         this.leftQuote = leftQuote;
+//         this.text = text;
+//         this.rightQoute = rightQoute;
+//     }
+// }
+//
+// class NegativeText extends TermItem {
+//     constructor(minus, leftQuote, text, rightQoute) {
+//         super();
+//         this.minus = minus;
+//         this.text = new QuotedText(leftQuote, text, rightQoute);
+//     }
+// }
 
-class Value extends TermItem {
-    constructor(value) {
-        super();
-        this.value = value;
-    }
-}
+// class Value extends TermItem {
+//     constructor(value) {
+//         super();
+//         this.value = value;
+//     }
+// }
 
-class SingleValue extends Value {
-    constructor(value) {
-        super(value);
-    }
-}
+// class SingleValue extends Value {
+//     constructor(value) {
+//         super(value);
+//     }
+// }
 
-class PositiveSingleValue extends TermItem {
-    constructor(lat, value) {
-        super();
-        this.lat = lat;
-        this.value = new SingleValue(value);
-    }
-}
-
-class NegativeSingleValue extends TermItem {
-    constructor(minus, value) {
-        super();
-        this.minus = minus;
-        this.value = new SingleValue(value);
-    }
-}
+// class PositiveSingleValue extends TermItem {
+//     constructor(lat, value) {
+//         super();
+//         this.lat = lat;
+//         this.value = new SingleValue(value);
+//     }
+// }
+//
+// class NegativeSingleValue extends TermItem {
+//     constructor(minus, value) {
+//         super();
+//         this.minus = minus;
+//         this.value = new SingleValue(value);
+//     }
+// }
 
 class ValueRange {
     constructor(leftVal, operator, rightVal) {
-        this.leftVal = new Value(leftVal);
+        this.leftVal = leftVal;
         this.operator = operator;
-        this.rightVal = new Value(rightVal);
+        this.rightVal = rightVal;
     }
 }
 
 class AttributeFilter {
-    constructor(operator, value) {
-        this.operator = operator;
-        if (value instanceof Value) {
-            this.value = new Value(value);
-        }
-        else {
-            this.value = new ValueRange(value);
+    constructor(value) {
+        if (arguments[1] !== undefined) this.operator = arguments[1];
+        if (value instanceof ValueRange) {
+            this.type = 'ValueRange';
+            this.left_lexeme = value.leftVal.lexeme;
+            this.left_literal = value.leftVal.literal;
+            this.right_lexeme = value.rightVal.lexeme;
+            this.right_literal = value.rightVal.literal;
+            this.vr_operator = value.operator;
+            this.begin = value.leftVal.begin;
+            this.end = value.rightVal.end;
+        } else {
+            this.type = 'Value';
+            this.lexeme = value.lexeme;
+            this.literal = value.literal;
+            this.begin = value.begin;
+            this.end = value.end;
         }
     }
 }
 
 class Attribute {
     constructor(value) {
-        this.value = value;
+        this.type = 'Attribute';
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
+        this.begin = value.begin;
+        this.end = value.end;
     }
 }
 
-class Has extends TermItem {
-    constructor(has, operator, value) {
-        super();
-        this.attribute = new Attribute(value);
-        this.has = has;
-        this.operator = operator;
-    }
-}
+// class Has extends TermItem {
+//     constructor(has, operator, value) {
+//         super();
+//         this.attribute = new Attribute(value);
+//         this.has = has;
+//         this.operator = operator;
+//     }
+// }
 
 class CategorizedFilter extends TermItem {
     constructor(attribute, operator, attributeFilter) {
-        super();
+        super('CategorizedFilter', attribute.begin, attributeFilter instanceof ValueRange ? attributeFilter.rightVal.end : attributeFilter.end);
         this.attribute = new Attribute(attribute);
         this.operator = operator;
-        this.attributeFilter = new AttributeFilter(attributeFilter);
+        if (arguments[3] !== undefined)
+            this.attributeFilter = new AttributeFilter(attributeFilter, arguments[3]);
+        else
+            this.attributeFilter = new AttributeFilter(attributeFilter);
     }
 }
 
-class Text extends TermItem {
-    constructor(text) {
-        super();
-        this.text = text;
-    }
-}
-
-class SortAttribute {
-    constructor(value, order) {
-        this.value = value;
-        this.order = order;
-    }
-}
-
-class SortField {
-    constructor(value) {
-        this.sortAttribute = value;
-    }
-}
-
-class Sort extends TermItem {
-    constructor(sortBy, value) {
-        super();
-        this.sortBy = sortBy;
-        this.value = new SortField(value);
-    }
-}
+// class Text extends TermItem {
+//     constructor(text) {
+//         super();
+//         this.text = text;
+//     }
+// }
+//
+// class SortAttribute {
+//     constructor(value, order) {
+//         this.value = value;
+//         this.order = order;
+//     }
+// }
+//
+// class SortField {
+//     constructor(value) {
+//         this.sortAttribute = value;
+//     }
+// }
+//
+// class Sort extends TermItem {
+//     constructor(sortBy, value) {
+//         super();
+//         this.sortBy = sortBy;
+//         this.value = new SortField(value);
+//     }
+// }
 
 
 class Parser {
@@ -207,9 +228,10 @@ class Parser {
     andOperand() {
         let expr = this.item();
 
-        while (this.match(types.WORD)) {
+        while (this.tokens[this.current].type === types.WORD && !(this.tokens[this.current].lexeme.toUpperCase()
+                in operators)) {
             let operator = new Token(types.OPERATOR, 'and', 'and');
-            let right = this.item(operator);
+            let right = this.item();
             expr = new Binary(expr, operator, right);
         }
 
@@ -217,18 +239,30 @@ class Parser {
     }
 
     item() {
-        let expr;
-        if (arguments[0] !== undefined) {
-            expr = this.unary(arguments[0]);
-        }
-        else {
-            expr = this.unary();
-        }
+        let expr = this.unary('key');
 
         if (this.match(operators.COLON)) {
             let operator = this.previous();
-            let right = this.unary();
-            expr = new CategorizedFilter(expr, operator, right);
+            if (this.tokens[this.current].type === '\-') {
+                let minus = this.advance();
+                let right_1 = this.unary();
+                if (this.match('..')) {
+                    let right = new ValueRange(right_1, this.previous(), this.unary());
+                    expr = new CategorizedFilter(expr, operator, right, minus);
+                } else {
+                    expr = new CategorizedFilter(expr, operator, right_1, minus);
+                }
+            }
+            else {
+                let right_1 = this.unary();
+                if (this.match('..')) {
+                    let right = new ValueRange(right_1, this.previous(), this.unary());
+                    expr = new CategorizedFilter(expr, operator, right);
+                } else {
+                    expr = new CategorizedFilter(expr, operator, right_1);
+                }
+            }
+
             // TO DO: multiple attribute filters (handle comma)
         }
 
@@ -256,10 +290,10 @@ class Parser {
     }
 
     primary() {
-        if (this.match(types.WORD)) {
+        if (this.tokens[this.current].type === types.WORD && arguments[0] === 'key') {
+            this.current++;
             if (!this.isAtEnd()) {
-                if (this.peek().type === operators.COLON || arguments[0] !== undefined ||
-                    this.previous().type === ':') return this.previous();
+                if (this.peek().type === operators.COLON) return this.previous();
 
                 if (this.tokens[this.current - 1].lexeme.toLowerCase() in singleWordHelper) {
                     let newLongWord = this.previous();
@@ -296,7 +330,7 @@ class Parser {
                     }
                 }
                 else {
-                    this.error("Unexpected token:\n", this.tokens[this.current + 1].end);
+                    this.error("Unexpected token:\n", this.tokens[this.current - 1].begin);
                 }
             }
             else if (this.current - 2 >= 0) {
@@ -305,6 +339,9 @@ class Parser {
             else {
                 this.error("Unexpected end:\n", this.previous().end + 1);
             }
+        }
+        else if (this.match(types.WORD) || this.match('COMPLEX_VALUE')) {
+            return this.previous();
         }
 
         if (this.match(operators.LEFT_PAREN)) {
@@ -319,7 +356,7 @@ class Parser {
         }
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
+            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end);
         } else {
             this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
         }
@@ -392,7 +429,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('"is duplicated by: gg"');
+    let t = new Parser('a: -{bb .. cc}');
     let res = t.parse();
     console.log(res);
 } catch (e) {
