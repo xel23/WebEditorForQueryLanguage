@@ -87,6 +87,15 @@ class Attribute {
     }
 }
 
+class Has extends TermItem {
+    constructor(has, operator, value) {
+        super('Has', has.begin, value.end);
+        this.attribute = new Attribute(value);
+        this.has = has;
+        this.operator = operator;
+    }
+}
+
 class CategorizedFilter extends TermItem {
     constructor(attribute, operator, attributeFilter) {
         super('CategorizedFilter', attribute.begin, attributeFilter instanceof ValueRange ? attributeFilter.rightVal.end : attributeFilter.end);
@@ -162,6 +171,29 @@ class CategorizedFilter extends TermItem {
                 new Token(':', ':', ':', 1, 2),
                 new Token('WORD', 'bb .. cc', 'bb .. cc', 4, 14),
                 new Token('-', '-', '-', 3, 4)
+            )},
+
+    {input: 'a: -bb .. cc', output:
+            new CategorizedFilter(
+                new Attribute(
+                    new Token('WORD', 'a', 'a', 0, 1)
+                ),
+                new Token(':', ':', ':', 1, 2),
+                new ValueRange(
+                    new Token('WORD', 'bb', 'bb', 4, 7),
+                    new Token('..', '..', '..', 7, 9),
+                    new Token('WORD', 'cc', 'cc', 10, 12),
+                ),
+                new Token('-', '-','-', 3, 4)
+            )},
+
+    {input: 'has: field', output:
+            new Has(
+                new Token('WORD', 'has', 'has', 0, 3),
+                new Token(':', ':', ':', 3, 4),
+                new Attribute(
+                    new Token('WORD', 'field', 'field', 5, 10)
+                )
             )},
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {

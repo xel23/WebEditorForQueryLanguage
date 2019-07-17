@@ -129,14 +129,14 @@ class Attribute {
     }
 }
 
-// class Has extends TermItem {
-//     constructor(has, operator, value) {
-//         super();
-//         this.attribute = new Attribute(value);
-//         this.has = has;
-//         this.operator = operator;
-//     }
-// }
+class Has extends TermItem {
+    constructor(has, operator, value) {
+        super('Has', has.begin, value.end);
+        this.attribute = new Attribute(value);
+        this.has = has;
+        this.operator = operator;
+    }
+}
 
 class CategorizedFilter extends TermItem {
     constructor(attribute, operator, attributeFilter) {
@@ -170,13 +170,13 @@ class CategorizedFilter extends TermItem {
 //     }
 // }
 //
-// class Sort extends TermItem {
-//     constructor(sortBy, value) {
-//         super();
-//         this.sortBy = sortBy;
-//         this.value = new SortField(value);
-//     }
-// }
+class Sort extends TermItem {
+    constructor(sortBy, value) {
+        super('Sort', sortBy.begin, value.end);
+        this.sortBy = sortBy;
+        this.value = new SortField(value);
+    }
+}
 
 
 class Parser {
@@ -245,6 +245,9 @@ class Parser {
             let operator = this.previous();
             if (this.tokens[this.current].type === '\-') {
                 let minus = this.advance();
+                if (expr.lexeme === 'has' || expr.lexeme === 'sort by') {
+                    this.error("'"+ expr.lexeme + "' can't have minus symbol\n", minus.begin);
+                }
                 let right_1 = this.unary();
                 if (this.match('..')) {
                     let right = new ValueRange(right_1, this.previous(), this.unary());
@@ -257,18 +260,26 @@ class Parser {
                 let right_1 = this.unary();
                 if (this.match('..')) {
                     let right = new ValueRange(right_1, this.previous(), this.unary());
-                    expr = new CategorizedFilter(expr, operator, right);
+                    if (expr.lexeme === 'has' || expr.lexeme === 'sort by') {
+                        this.error("'" + expr.lexeme + "' can't have ValueArrange value\n", right_1.begin);
+                    }
+                    else {
+                        expr = new CategorizedFilter(expr, operator, right);
+                    }
                 } else {
-                    expr = new CategorizedFilter(expr, operator, right_1);
+                    if (expr.lexeme === 'has') {
+                        expr = new Has(expr, operator, right_1);
+                        // TO DO: multiple attribute has (handle comma)
+                    }
+                    else if(expr.lexeme === 'sort by') {
+                        expr = new Sort(expr, operator, right_1);
+                    }
+                    else {
+                        expr = new CategorizedFilter(expr, operator, right_1);
+                    }
                 }
             }
-
             // TO DO: multiple attribute filters (handle comma)
-        }
-
-        else if(this.match(types.TUPLE_NAME) || this.tokens[this.current - 1].type === types.TUPLE_NAME) {
-            let right = this.unary();
-            expr = new Tuple(expr, right);
         }
 
         return expr;
@@ -429,7 +440,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('a: -{bb .. cc}');
+    let t = new Parser('has: filed');
     let res = t.parse();
     console.log(res);
 } catch (e) {
