@@ -1,16 +1,16 @@
-let lexer = require('./lexer');
-let operators = require('./operators');
-let types = require('./types');
-let errorEx = require('./syntaxException');
-let Token = require('./token');
-let singleWordHelper = require('./singleWordHelper');
-let doubleWordHelper = require('./doubleWordHelper');
-let timeTracking = require('./timeTracking');
-let sortAttribute = require('./sortAttribute');
-let customField = require('./customField');
-let keyword = require('./keyword');
-let issueAttribute = require('./issueAttribute');
-let issueLink = require('./issueLink');
+const lexer = require('./lexer');
+const operators = require('./operators');
+const types = require('./types');
+const errorEx = require('./syntaxException');
+const Token = require('./token');
+const singleWordHelper = require('./singleWordHelper');
+const doubleWordHelper = require('./doubleWordHelper');
+const timeTracking = require('./timeTracking');
+const sortAttribute = require('./sortAttribute');
+const customField = require('./customField');
+const keyword = require('./keyword');
+const issueAttribute = require('./issueAttribute');
+const issueLink = require('./issueLink');
 
 class Binary {
     constructor(left, operator, right) {
@@ -73,21 +73,27 @@ class TermItem {
 //     }
 // }
 
-// class PositiveSingleValue extends TermItem {
-//     constructor(lat, value) {
-//         super();
-//         this.lat = lat;
-//         this.value = new SingleValue(value);
-//     }
-// }
-//
-// class NegativeSingleValue extends TermItem {
-//     constructor(minus, value) {
-//         super();
-//         this.minus = minus;
-//         this.value = new SingleValue(value);
-//     }
-// }
+class PositiveSingleValue extends TermItem {
+    constructor(lat, value) {
+        super('PositiveSingleValue', lat.begin, value.right.end);
+        this.operator = lat.type;
+        this.lexeme = value.right.lexeme;
+        this.literal = value.right.literal;
+        this.begin = value.right.begin;
+        this.end = value.right.end;
+    }
+}
+
+class NegativeSingleValue extends TermItem {
+    constructor(minus, value) {
+        super('NegativeSingleValue', minus.begin, value.right.end);
+        this.minus = minus.type;
+        this.lexeme = value.right.lexeme;
+        this.literal = value.right.literal;
+        this.begin = value.right.begin;
+        this.end = value.right.end;
+    }
+}
 
 class ValueRange {
     constructor(leftVal, operator, rightVal) {
@@ -133,7 +139,7 @@ class Has extends TermItem {
     constructor(has, operator, value) {
         super('Has', has.begin, value.end);
         this.attribute = new Attribute(value);
-        this.has = has;
+        this.key = has;
         this.operator = operator;
     }
 }
@@ -156,25 +162,25 @@ class CategorizedFilter extends TermItem {
 //         this.text = text;
 //     }
 // }
-//
-// class SortAttribute {
-//     constructor(value, order) {
-//         this.value = value;
-//         this.order = order;
-//     }
-// }
-//
-// class SortField {
-//     constructor(value) {
-//         this.sortAttribute = value;
-//     }
-// }
-//
+
+class SortAttribute {
+    constructor(value) {
+        this.type = value.type;
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
+        this.begin = value.begin;
+        this.end = value.end;
+    }
+}
+
 class Sort extends TermItem {
-    constructor(sortBy, value) {
+    constructor(sortBy, operator, value) {
         super('Sort', sortBy.begin, value.end);
-        this.sortBy = sortBy;
-        this.value = new SortField(value);
+        this.key = sortBy;
+        this.value = new SortAttribute(value);
+        if (arguments[3] !== undefined) {
+            this.order = arguments[3];
+        }
     }
 }
 
@@ -206,6 +212,7 @@ class Parser {
 
         while (this.matchOperator(operators.OR)) {
             let operator = this.previous();
+            operator.type = 'OPERATOR';
             let right = this.andExpression();
             expr = new Binary(expr, operator, right);
         }
@@ -218,6 +225,7 @@ class Parser {
 
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
+            operator.type = 'OPERATOR';
             let right = this.andOperand();
             expr = new Binary(expr, operator, right);
         }
@@ -228,8 +236,8 @@ class Parser {
     andOperand() {
         let expr = this.item();
 
-        while (this.tokens[this.current].type === types.WORD && !(this.tokens[this.current].lexeme.toUpperCase()
-                in operators)) {
+        while ((this.tokens[this.current].type === types.WORD || this.tokens[this.current].type === '#' ||
+            this.tokens[this.current].type === '-') && !(this.tokens[this.current].lexeme.toUpperCase() in operators)) {
             let operator = new Token(types.OPERATOR, 'and', 'and');
             let right = this.item();
             expr = new Binary(expr, operator, right);
@@ -272,7 +280,12 @@ class Parser {
                         // TO DO: multiple attribute has (handle comma)
                     }
                     else if(expr.lexeme === 'sort by') {
-                        expr = new Sort(expr, operator, right_1);
+                        if (this.tokens[this.current].lexeme === 'asc' || this.tokens[this.current].lexeme === 'desc') {
+                            expr = new Sort(expr, operator, right_1, this.advance());
+                        }
+                        else {
+                            expr = new Sort(expr, operator, right_1);
+                        }
                     }
                     else {
                         expr = new CategorizedFilter(expr, operator, right_1);
@@ -282,14 +295,32 @@ class Parser {
             // TO DO: multiple attribute filters (handle comma)
         }
 
+        else if (expr.operator.type !== '#' && expr.operator.type !== '-') {
+            this.error("Missing ':'\n", expr.end);
+        }
+
+        else if (expr.operator.type === '#') {
+            expr = new PositiveSingleValue(expr.operator, expr);
+        }
+
+        else if (expr.operator.type === '-') {
+            expr = new NegativeSingleValue(expr.operator, expr);
+        }
+
         return expr;
     }
 
     unary() {
         if (this.match('#') || this.match('\-')) {
             let operator = this.previous();
-            let right = this.item();
-            return new Unary(operator, right);
+            if (arguments[0] === 'key') {
+                let right = this.primary();
+                return new Unary(operator, right);
+            }
+            else {
+                let right = this.item();
+                return new Unary(operator, right);
+            }
         }
 
         if (arguments[0] !== undefined) {
@@ -341,7 +372,7 @@ class Parser {
                     }
                 }
                 else {
-                    this.error("Unexpected token:\n", this.tokens[this.current - 1].begin);
+                    this.error("Unexpected token:\n", this.tokens[this.current - 1].end);
                 }
             }
             else if (this.current - 2 >= 0) {
@@ -440,7 +471,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('has: filed');
+    let t = new Parser('a: m or -n');
     let res = t.parse();
     console.log(res);
 } catch (e) {
