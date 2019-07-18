@@ -42,8 +42,10 @@ class Lexer {
             case '\-': this.addToken('\-', '\-', this.start, this.current); break;
             case '#': this.addToken('#', '#', this.start, this.current); break;
             case '"': {
+                this.addToken('"', '"', this.start, this.current);
                 let cur =  this.stringQuote();
                 this.addToken('QUOTED_TEXT', cur, this.start, this.current);
+                this.addToken('"', '"', this.current - 1, this.current);
                 break;
             }
             case ':': this.addToken(':', ':', this.start, this.current); break;

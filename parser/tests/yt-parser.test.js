@@ -151,6 +151,26 @@ class NegativeSingleValue extends TermItem {
     }
 }
 
+class QuotedText extends TermItem {
+    constructor(leftQuote, text, rightQuote) {
+        super('QuotedText', leftQuote.begin, rightQuote.end);
+        this.leftQuote = leftQuote;
+        this.lexeme = text.lexeme;
+        this.literal = text.literal;
+        this.begin = leftQuote.begin;
+        this.end = rightQuote.end;
+        this.rightQuote = rightQuote;
+    }
+}
+
+class NegativeText extends TermItem {
+    constructor(minus, qt) {
+        super('NegativeText', minus.begin, qt.end);
+        this.minus = minus;
+        this.text = qt;
+    }
+}
+
 [
     {input: 'a: b', output:
         new CategorizedFilter(
@@ -410,6 +430,23 @@ class NegativeSingleValue extends TermItem {
                         new Token('WORD', 'n', 'n', 5, 6)
                     )
                 )
+            )},
+
+    {input: '-"a new attr: m or -n"', output:
+            new NegativeText(
+                new Token('-', '-', '-', 0, 1),
+                new QuotedText(
+                    new Token('"', '"', '"', 1, 2),
+                    new Token('QUOTED_TEXT', 'a new attr: m or -n', 'a new attr: m or -n', 2, 21),
+                    new Token('"', '"', '"', 21, 22)
+                )
+            )},
+
+    {input: '"a new attr: m or -n"', output:
+            new QuotedText(
+                new Token('"', '"', '"', 0, 1),
+                new Token('QUOTED_TEXT', 'a new attr: m or -n', 'a new attr: m or -n', 1, 20),
+                new Token('"', '"', '"', 20, 21)
             )},
 
 ].forEach((it) => {

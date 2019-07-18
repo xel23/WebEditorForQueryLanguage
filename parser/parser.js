@@ -1,16 +1,10 @@
+// TO DO: Text
+
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
 const errorEx = require('./syntaxException');
 const Token = require('./token');
-const singleWordHelper = require('./singleWordHelper');
-const doubleWordHelper = require('./doubleWordHelper');
-const timeTracking = require('./timeTracking');
-const sortAttribute = require('./sortAttribute');
-const customField = require('./customField');
-const keyword = require('./keyword');
-const issueAttribute = require('./issueAttribute');
-const issueLink = require('./issueLink');
 
 class Binary {
     constructor(left, operator, right) {
@@ -43,35 +37,25 @@ class TermItem {
     }
 }
 
-// class QuotedText extends TermItem {
-//     constructor(leftQuote, text, rightQoute) {
-//         super();
-//         this.leftQuote = leftQuote;
-//         this.text = text;
-//         this.rightQoute = rightQoute;
-//     }
-// }
-//
-// class NegativeText extends TermItem {
-//     constructor(minus, leftQuote, text, rightQoute) {
-//         super();
-//         this.minus = minus;
-//         this.text = new QuotedText(leftQuote, text, rightQoute);
-//     }
-// }
+class QuotedText extends TermItem {
+    constructor(leftQuote, text, rightQuote) {
+        super('QuotedText', leftQuote.begin, rightQuote.end);
+        this.leftQuote = leftQuote;
+        this.lexeme = text.lexeme;
+        this.literal = text.literal;
+        this.begin = leftQuote.begin;
+        this.end = rightQuote.end;
+        this.rightQuote = rightQuote;
+    }
+}
 
-// class Value extends TermItem {
-//     constructor(value) {
-//         super();
-//         this.value = value;
-//     }
-// }
-
-// class SingleValue extends Value {
-//     constructor(value) {
-//         super(value);
-//     }
-// }
+class NegativeText extends TermItem {
+    constructor(minus, qt) {
+        super('NegativeText', minus.begin, qt.end);
+        this.minus = minus;
+        this.text = qt;
+    }
+}
 
 class PositiveSingleValue extends TermItem {
     constructor(lat, value) {
@@ -295,6 +279,10 @@ class Parser {
             // TO DO: multiple attribute filters (handle comma)
         }
 
+        else if (expr instanceof QuotedText) {
+            return expr;
+        }
+
         else if (expr.operator.type !== '#' && expr.operator.type !== '-') {
             this.error("Missing ':'\n", expr.end);
         }
@@ -304,7 +292,12 @@ class Parser {
         }
 
         else if (expr.operator.type === '-') {
-            expr = new NegativeSingleValue(expr.operator, expr);
+            if (expr.right instanceof QuotedText) {
+                expr = new NegativeText(expr.operator, expr.right);
+            }
+            else {
+                expr = new NegativeSingleValue(expr.operator, expr);
+            }
         }
 
         return expr;
@@ -334,56 +327,71 @@ class Parser {
     primary() {
         if (this.tokens[this.current].type === types.WORD && arguments[0] === 'key') {
             this.current++;
-            if (!this.isAtEnd()) {
-                if (this.peek().type === operators.COLON) return this.previous();
+            let attr = this.previous();
+            // if (!this.isAtEnd()) {
+            //     if (this.peek().type === operators.COLON) return this.previous();
+            //
+            //     if (this.tokens[this.current - 1].lexeme.toLowerCase() in singleWordHelper) {
+            //         let newLongWord = this.previous();
+            //         let secondWord = this.advance();
+            //         newLongWord.lexeme += ' ' + secondWord.lexeme;
+            //         newLongWord.literal += ' ' + secondWord.literal;
+            //         newLongWord.end = secondWord.end;
+            //         if (newLongWord.lexeme.toLowerCase() in timeTracking ||
+            //             newLongWord.lexeme.toLowerCase() in sortAttribute ||
+            //             newLongWord.lexeme.toLowerCase() in customField ||
+            //             newLongWord.lexeme.toLowerCase() in issueAttribute ||
+            //             newLongWord.lexeme.toLowerCase() in issueLink) {
+            //             return newLongWord;
+            //         }
+            //         else if (newLongWord.lexeme.toLowerCase() in doubleWordHelper) {
+            //             if (!this.isAtEnd()) {
+            //                 let thirdWord = this.advance();
+            //                 newLongWord.lexeme += ' ' + thirdWord.lexeme;
+            //                 newLongWord.literal += ' ' + thirdWord.literal;
+            //                 newLongWord.end = thirdWord.end;
+            //                 if (newLongWord.lexeme.toLowerCase() in customField ||
+            //                     newLongWord.lexeme.toLowerCase() in issueLink) {
+            //                     return newLongWord;
+            //                 }
+            //                 else {
+            //                     this.error("Unexpected token:\n", thirdWord.begin);
+            //                 }
+            //             } else {
+            //                 this.error("Unexpected end:\n", newLongWord.end + 1);
+            //             }
+            //         }
+            //         else {
+            //             this.error("Unexpected token:\n", secondWord.begin);
+            //         }
+            //     }
+            //     else {
+            //         this.error("Unexpected token:\n", this.tokens[this.current - 1].end);
+            //     }
+            // }
+            // else if (this.current - 2 >= 0) {
+            //     if (this.tokens[this.current - 2].type === ':') return this.previous();
+            // }
+            // else {
+            //     this.error("Unexpected end:\n", this.previous().end + 1);
+            // }
 
-                if (this.tokens[this.current - 1].lexeme.toLowerCase() in singleWordHelper) {
-                    let newLongWord = this.previous();
-                    let secondWord = this.advance();
-                    newLongWord.lexeme += ' ' + secondWord.lexeme;
-                    newLongWord.literal += ' ' + secondWord.literal;
-                    newLongWord.end = secondWord.end;
-                    if (newLongWord.lexeme.toLowerCase() in timeTracking ||
-                        newLongWord.lexeme.toLowerCase() in sortAttribute ||
-                        newLongWord.lexeme.toLowerCase() in customField ||
-                        newLongWord.lexeme.toLowerCase() in issueAttribute ||
-                        newLongWord.lexeme.toLowerCase() in issueLink) {
-                        return newLongWord;
-                    }
-                    else if (newLongWord.lexeme.toLowerCase() in doubleWordHelper) {
-                        if (!this.isAtEnd()) {
-                            let thirdWord = this.advance();
-                            newLongWord.lexeme += ' ' + thirdWord.lexeme;
-                            newLongWord.literal += ' ' + thirdWord.literal;
-                            newLongWord.end = thirdWord.end;
-                            if (newLongWord.lexeme.toLowerCase() in customField ||
-                                newLongWord.lexeme.toLowerCase() in issueLink) {
-                                return newLongWord;
-                            }
-                            else {
-                                this.error("Unexpected token:\n", thirdWord.begin);
-                            }
-                        } else {
-                            this.error("Unexpected end:\n", newLongWord.end + 1);
-                        }
-                    }
-                    else {
-                        this.error("Unexpected token:\n", secondWord.begin);
-                    }
-                }
-                else {
-                    this.error("Unexpected token:\n", this.tokens[this.current - 1].end);
-                }
+            while (this.match(types.WORD)) {
+                attr.lexeme += ' ' + this.previous().lexeme;
+                attr.literal += ' ' + this.previous().literal;
+                attr.end = this.previous().end;
             }
-            else if (this.current - 2 >= 0) {
-                if (this.tokens[this.current - 2].type === ':') return this.previous();
-            }
-            else {
-                this.error("Unexpected end:\n", this.previous().end + 1);
-            }
+
+            return attr;
         }
         else if (this.match(types.WORD) || this.match('COMPLEX_VALUE')) {
             return this.previous();
+        }
+
+        else if (this.match('"')) {
+            let qt = new QuotedText(this.previous(), this.advance(), this.advance());
+            this.advance();
+            return qt;
         }
 
         if (this.match(operators.LEFT_PAREN)) {
@@ -470,26 +478,26 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('a: m or -n');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Parser('"a new attr: m or -n"');
+//     let res = t.parse();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
-// document.getElementById('query').oninput = function () {
-//     try {
-//         let p = new Parser(document.getElementById('query').value);
-//         let res = p.parse();
-//         document.getElementById('result').value = JSON.stringify(res, null, 4);
-//     } catch (e) {
-//         if (e instanceof errorEx) {
-//             document.getElementById('result').value = e;
-//         } else {
-//             document.getElementById('result').value = 'Empty query';
-//         }
-//     }
-// };
+document.getElementById('query').oninput = function () {
+    try {
+        let p = new Parser(document.getElementById('query').value);
+        let res = p.parse();
+        document.getElementById('result').value = JSON.stringify(res, null, 4);
+    } catch (e) {
+        if (e instanceof errorEx) {
+            document.getElementById('result').value = e;
+        } else {
+            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+        }
+    }
+};
 
 module.exports = Parser;
