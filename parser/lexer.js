@@ -59,7 +59,7 @@ class Lexer {
                 break;
             }
             // case '*': this.addToken('*', '*', this.start, this.current); break;
-            case ',': this.addToken(''); break; // ->>>
+            case ',': this.addToken(',', ',', this.start, this.current); break; // ->>>
             case ' ':
             case '\t':
             case '\n':
@@ -70,7 +70,7 @@ class Lexer {
                         this.identifier();
                     }
                     else {
-                        this.error("Unexpected token switch1:\n", this.current - 1);
+                        this.error("Unexpected token:\n", this.current - 1);
                     }
                 // }
                 // else {

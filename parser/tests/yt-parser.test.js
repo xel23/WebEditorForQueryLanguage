@@ -47,6 +47,48 @@ class TermItem {
     }
 }
 
+class QuotedText extends TermItem {
+    constructor(leftQuote, text, rightQuote) {
+        super('QuotedText', leftQuote.begin, rightQuote.end);
+        this.leftQuote = leftQuote;
+        this.lexeme = text.lexeme;
+        this.literal = text.literal;
+        this.begin = leftQuote.begin;
+        this.end = rightQuote.end;
+        this.rightQuote = rightQuote;
+    }
+}
+
+class NegativeText extends TermItem {
+    constructor(minus, qt) {
+        super('NegativeText', minus.begin, qt.end);
+        this.minus = minus;
+        this.text = qt;
+    }
+}
+
+class PositiveSingleValue extends TermItem {
+    constructor(lat, value) {
+        super('PositiveSingleValue', lat.begin, value.right.end);
+        this.operator = lat.type;
+        this.lexeme = value.right.lexeme;
+        this.literal = value.right.literal;
+        this.begin = lat.begin;
+        this.end = value.right.end;
+    }
+}
+
+class NegativeSingleValue extends TermItem {
+    constructor(minus, value) {
+        super('NegativeSingleValue', minus.begin, value.right.end);
+        this.minus = minus.type;
+        this.lexeme = value.right.lexeme;
+        this.literal = value.right.literal;
+        this.begin = minus.begin;
+        this.end = value.right.end;
+    }
+}
+
 class ValueRange {
     constructor(leftVal, operator, rightVal) {
         this.leftVal = leftVal;
@@ -68,7 +110,7 @@ class AttributeFilter {
             this.begin = value.leftVal.begin;
             this.end = value.rightVal.end;
         } else {
-            this.type = 'Value';
+            this.type = value.type === 'QuotedText' ? value.type : 'Value';
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -108,6 +150,13 @@ class CategorizedFilter extends TermItem {
     }
 }
 
+// class Text extends TermItem {
+//     constructor(text) {
+//         super();
+//         this.text = text;
+//     }
+// }
+
 class SortAttribute {
     constructor(value) {
         this.type = value.type;
@@ -126,48 +175,6 @@ class Sort extends TermItem {
         if (arguments[3] !== undefined) {
             this.order = arguments[3];
         }
-    }
-}
-
-class PositiveSingleValue extends TermItem {
-    constructor(lat, value) {
-        super('PositiveSingleValue', lat.begin, value.right.end);
-        this.operator = lat.type;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = value.right.begin;
-        this.end = value.right.end;
-    }
-}
-
-class NegativeSingleValue extends TermItem {
-    constructor(minus, value) {
-        super('NegativeSingleValue', minus.begin, value.right.end);
-        this.minus = minus.type;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = value.right.begin;
-        this.end = value.right.end;
-    }
-}
-
-class QuotedText extends TermItem {
-    constructor(leftQuote, text, rightQuote) {
-        super('QuotedText', leftQuote.begin, rightQuote.end);
-        this.leftQuote = leftQuote;
-        this.lexeme = text.lexeme;
-        this.literal = text.literal;
-        this.begin = leftQuote.begin;
-        this.end = rightQuote.end;
-        this.rightQuote = rightQuote;
-    }
-}
-
-class NegativeText extends TermItem {
-    constructor(minus, qt) {
-        super('NegativeText', minus.begin, qt.end);
-        this.minus = minus;
-        this.text = qt;
     }
 }
 
