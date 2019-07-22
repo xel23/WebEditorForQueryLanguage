@@ -1,3 +1,6 @@
+// TO DO:
+// parentheses with 'and' and without and
+
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -146,13 +149,6 @@ class CategorizedFilter extends TermItem {
     }
 }
 
-// class Text extends TermItem {
-//     constructor(text) {
-//         super();
-//         this.text = text;
-//     }
-// }
-
 class SortAttribute {
     constructor(value) {
         this.type = value.type;
@@ -272,6 +268,10 @@ class Parser {
             let operator = this.previous();
             operator.type = 'OPERATOR';
             let right = this.andOperand();
+            if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
+                || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue || expr instanceof Grouping)) {
+                this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
+            }
             expr = new Binary(expr, operator, right);
         }
 
@@ -549,7 +549,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('test: -my, te');
+    let t = new Parser('test: t, -15 .. 20 and state: open');
     let res = t.parse();
     console.log(res);
 } catch (e) {

@@ -155,13 +155,6 @@ class CategorizedFilter extends TermItem {
     }
 }
 
-// class Text extends TermItem {
-//     constructor(text) {
-//         super();
-//         this.text = text;
-//     }
-// }
-
 class SortAttribute {
     constructor(value) {
         this.type = value.type;
