@@ -103,8 +103,12 @@ class AttributeFilter {
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
+            this.left_lexeme_begin = value.leftVal.begin;
+            this.left_lexeme_end = value.leftVal.end;
             this.left_literal = value.leftVal.literal;
             this.right_lexeme = value.rightVal.lexeme;
+            this.right_lexeme_begin = value.rightVal.begin;
+            this.right_lexeme_end = value.rightVal.end;
             this.right_literal = value.rightVal.literal;
             this.vr_operator = value.operator;
             this.begin = value.leftVal.begin;
@@ -171,6 +175,7 @@ class Sort extends TermItem {
     constructor(sortBy, operator, value) {
         super('Sort', sortBy.begin, value.end);
         this.key = sortBy;
+        this.operator = operator;
         this.value = new SortAttribute(value);
         if (arguments[3] !== undefined) {
             this.order = arguments[3];
@@ -454,6 +459,138 @@ class Sort extends TermItem {
                 new Token('"', '"', '"', 0, 1),
                 new Token('QUOTED_TEXT', 'a new attr: m or -n', 'a new attr: m or -n', 1, 20),
                 new Token('"', '"', '"', 20, 21)
+            )},
+
+    {input: 'name: val1, val2, val3', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'name', 'name', 0, 4)
+                        ),
+                        new Token(':', ':', ':', 4, 5),
+                        new Token('WORD', 'val1', 'val1', 6, 10)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'name', 'name', 0, 4)
+                        ),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 12, 16)
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'name', 'name', 0, 4)
+                    ),
+                    new Token(':' ,':', ':'),
+                    new Token('WORD', 'val3', 'val3', 18, 22)
+                )
+            )},
+
+    {input: 'name: val1, val2 .. lav2, val3', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'name', 'name', 0, 4)
+                        ),
+                        new Token(':', ':', ':', 4, 5),
+                        new Token('WORD', 'val1', 'val1', 6, 10)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'name', 'name', 0, 4)
+                        ),
+                        new Token(':', ':', ':'),
+                        new ValueRange(
+                            new Token('WORD', 'val2', 'val2', 12, 17),
+                            new Token('..', '..', '..', 17, 19),
+                            new Token('WORD', 'lav2', 'lav2', 20, 24)
+                        )
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'name', 'name', 0, 4)
+                    ),
+                    new Token(':' ,':', ':'),
+                    new Token('WORD', 'val3', 'val3', 26, 30)
+                )
+            )},
+
+    {input: 'has: val1, val2, val3', output:
+            new Binary(
+                new Binary(
+                    new Has(
+                        new Token('WORD', 'has', 'has', 0, 3),
+                        new Token(':', ':', ':', 3, 4),
+                        new Token('WORD', 'val1', 'val1', 5, 9)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new Has(
+                        new Token('WORD', 'has', 'has', 0, 3),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 11, 15)
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new Has(
+                    new Token('WORD', 'has', 'has', 0, 3),
+                    new Token(':', ':', ':'),
+                    new Token('WORD', 'val3', 'val3', 17, 21)
+                )
+            )},
+
+    {input: 'sort by: val1, val2, val3', output:
+            new Binary(
+                new Binary(
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':', 7, 8),
+                        new Token('WORD', 'val1', 'val1', 9, 13)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 15, 19)
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new Sort(
+                    new Token('WORD', 'sort by', 'sort by', 0, 7),
+                    new Token(':', ':', ':'),
+                    new Token('WORD', 'val3', 'val3', 21, 25)
+                )
+            )},
+
+    {input: 'sort by: val1, val2 asc, val3', output:
+            new Binary(
+                new Binary(
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':', 7, 8),
+                        new Token('WORD', 'val1', 'val1', 9, 13)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 15, 20),
+                        new Token('WORD', 'asc', 'asc', 20, 23)
+                    )
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new Sort(
+                    new Token('WORD', 'sort by', 'sort by', 0, 7),
+                    new Token(':', ':', ':'),
+                    new Token('WORD', 'val3', 'val3', 25, 29)
+                )
             )},
 
 ].forEach((it) => {

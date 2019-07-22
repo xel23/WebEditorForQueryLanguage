@@ -1,5 +1,3 @@
-// TO DO: Text, commas
-
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -81,9 +79,12 @@ class NegativeSingleValue extends TermItem {
 
 class ValueRange {
     constructor(leftVal, operator, rightVal) {
+        this.type = 'ValueRange';
         this.leftVal = leftVal;
         this.operator = operator;
         this.rightVal = rightVal;
+        this.begin = leftVal.begin;
+        this.end = rightVal.end;
     }
 }
 
@@ -93,8 +94,12 @@ class AttributeFilter {
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
+            this.left_lexeme_begin = value.leftVal.begin;
+            this.left_lexeme_end = value.leftVal.end;
             this.left_literal = value.leftVal.literal;
             this.right_lexeme = value.rightVal.lexeme;
+            this.right_lexeme_begin = value.rightVal.begin;
+            this.right_lexeme_end = value.rightVal.end;
             this.right_literal = value.rightVal.literal;
             this.vr_operator = value.operator;
             this.begin = value.leftVal.begin;
@@ -161,18 +166,11 @@ class Sort extends TermItem {
     constructor(sortBy, operator, value) {
         super('Sort', sortBy.begin, value.end);
         this.key = sortBy;
+        this.operator = operator;
         this.value = new SortAttribute(value);
         if (arguments[3] !== undefined) {
             this.order = arguments[3];
         }
-        // if (sortField.length > 1) {
-        //     if (sortField[1] === 'asc' || sortField[1] === 'desc') {
-        //         this.order = sortField[1];
-        //     }
-        //     else {
-        //         new errorEx("SortAttribute can have 'asc' or 'desc' order\n", 0, "");
-        //     }
-        // }
     }
 }
 
@@ -191,16 +189,20 @@ class Parser {
 
     parse() {
         let tree = this.getTree();
-        if (this.current < this.tokens.length - 1) {
-            this.error("Incomplete query after: '" + this.tokens[this.current - 1].literal + "'\n", this.tokens[this.current - 1].end);
+        while (this.current < this.tokens.length - 1) {
+            let operator = new Token('OPERATOR', 'and', 'and');
+            let rightTree = this.getTree();
+            if (rightTree instanceof Token) {
+                this.error("Incomplete query after: '" + this.tokens[this.current - 2].literal + "'\n", rightTree.begin);
+            }
+            tree = new Binary(tree, operator, rightTree);
         }
-        else {
-            return tree;
-        }
+        return tree;
     }
 
     orExpression() {
         let expr = this.andExpression();
+        let exprCommaHelper = expr;
 
         while (this.matchOperator(operators.OR) || this.match(',')) {
             if (this.previous().lexeme === operators.OR) {
@@ -211,19 +213,32 @@ class Parser {
             }
             else {
                 let operator = new Token('OPERATOR', 'or', 'or');
-                let right = this.andExpression();
-                if (right.type === types.WORD || right.type === types.QUOTED_TEXT || right instanceof Unary) {
-                    if (expr instanceof CategorizedFilter) {
-                        expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', expr, right));
+                let right = this.andExpression('value');
+                this.current--;
+                if (this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) {
+                    if (exprCommaHelper instanceof CategorizedFilter) {
+                        expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper, right));
                     }
-                    else if (expr instanceof Has) {
-                        expr = new Binary(expr, operator, this.rightObj('Has', expr, right));
+                    else if (exprCommaHelper instanceof Has) {
+                        expr = new Binary(expr, operator, this.rightObj('Has', exprCommaHelper, right));
                     }
-                    else if (expr instanceof Sort) {
-                        expr = new Binary(expr, operator, this.rightObj('Sort', expr, right));
+                    else if (exprCommaHelper instanceof Sort) {
+                        let order = this.tokens[this.current];
+                        if (order.type === types.WORD) {
+                            if (order.literal === 'asc' || order.literal === 'desc') {
+                                expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right, order));
+                                this.current++;
+                            }
+                            else {
+                                this.error("Unexpected order:\n", order.begin);
+                            }
+                        }
+                        else {
+                            expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right));
+                        }
                     }
                     else {
-                        this.error(expr.type + "does not support comma operator:\n", expr.begin);
+                        this.error(expr.type + " does not support comma operator:\n", expr.begin);
                     }
                 }
                 else if (right.type === '-' || right.type !== '#') {
@@ -239,7 +254,11 @@ class Parser {
     }
 
     andExpression() {
-        let expr = this.andOperand();
+        let expr;
+        if (arguments[0] !== undefined)
+            expr = this.andOperand(arguments[0]);
+        else
+            expr = this.andOperand();
 
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
@@ -252,20 +271,25 @@ class Parser {
     }
 
     andOperand() {
-        let expr = this.item();
+        let expr;
+        if (arguments[0] !== undefined)
+            expr = this.item(arguments[0]);
+        else
+            expr = this.item();
 
-        while ((this.tokens[this.current].type === types.WORD || this.tokens[this.current].type === '#' ||
-            this.tokens[this.current].type === '-') && !(this.tokens[this.current].lexeme.toUpperCase() in operators)) {
-            let operator = new Token(types.OPERATOR, 'and', 'and');
-            let right = this.item();
-            expr = new Binary(expr, operator, right);
-        }
+        // while ((this.tokens[this.current].type === types.WORD || this.tokens[this.current].type === '#' ||
+        //     this.tokens[this.current].type === '-') && !(this.tokens[this.current].lexeme.toUpperCase() in operators)
+        //     && this.tokens[this.current - 1].type !== ',') {
+        //     let operator = new Token(types.OPERATOR, 'and', 'and');
+        //     let right = this.item();
+        //     expr = new Binary(expr, operator, right);
+        // }
 
         return expr;
     }
 
     item() {
-        let expr = this.unary('key');
+        let expr = this.unary(arguments[0] || 'key');
 
         if (this.match(operators.COLON)) {
             let operator = this.previous();
@@ -295,7 +319,6 @@ class Parser {
                 } else {
                     if (expr.lexeme === 'has') {
                         expr = new Has(expr, operator, right_1);
-                        // TO DO: multiple attribute has (handle comma)
                     }
                     else if(expr.lexeme === 'sort by') {
                         if (this.tokens[this.current].lexeme === 'asc' || this.tokens[this.current].lexeme === 'desc') {
@@ -310,7 +333,6 @@ class Parser {
                     }
                 }
             }
-            // TO DO: multiple attribute filters (handle comma)
         }
 
         else if (expr instanceof QuotedText) {
@@ -344,7 +366,20 @@ class Parser {
             return expr;
         }
 
-        else if (this.match(',') || this.isAtEnd()) {
+        else if (this.match(',')) {
+            this.current--;
+            return expr;
+        }
+
+        else if (this.isAtEnd()) {
+            return expr;
+        }
+
+        else if (this.match('..')) {
+            return new ValueRange(expr, this.previous(), this.unary())
+        }
+
+        else if (arguments[0] === 'value') {
             return expr;
         }
 
@@ -380,53 +415,6 @@ class Parser {
         if (this.tokens[this.current].type === types.WORD && arguments[0] === 'key') {
             this.current++;
             let attr = this.previous();
-            // if (!this.isAtEnd()) {
-            //     if (this.peek().type === operators.COLON) return this.previous();
-            //
-            //     if (this.tokens[this.current - 1].lexeme.toLowerCase() in singleWordHelper) {
-            //         let newLongWord = this.previous();
-            //         let secondWord = this.advance();
-            //         newLongWord.lexeme += ' ' + secondWord.lexeme;
-            //         newLongWord.literal += ' ' + secondWord.literal;
-            //         newLongWord.end = secondWord.end;
-            //         if (newLongWord.lexeme.toLowerCase() in timeTracking ||
-            //             newLongWord.lexeme.toLowerCase() in sortAttribute ||
-            //             newLongWord.lexeme.toLowerCase() in customField ||
-            //             newLongWord.lexeme.toLowerCase() in issueAttribute ||
-            //             newLongWord.lexeme.toLowerCase() in issueLink) {
-            //             return newLongWord;
-            //         }
-            //         else if (newLongWord.lexeme.toLowerCase() in doubleWordHelper) {
-            //             if (!this.isAtEnd()) {
-            //                 let thirdWord = this.advance();
-            //                 newLongWord.lexeme += ' ' + thirdWord.lexeme;
-            //                 newLongWord.literal += ' ' + thirdWord.literal;
-            //                 newLongWord.end = thirdWord.end;
-            //                 if (newLongWord.lexeme.toLowerCase() in customField ||
-            //                     newLongWord.lexeme.toLowerCase() in issueLink) {
-            //                     return newLongWord;
-            //                 }
-            //                 else {
-            //                     this.error("Unexpected token:\n", thirdWord.begin);
-            //                 }
-            //             } else {
-            //                 this.error("Unexpected end:\n", newLongWord.end + 1);
-            //             }
-            //         }
-            //         else {
-            //             this.error("Unexpected token:\n", secondWord.begin);
-            //         }
-            //     }
-            //     else {
-            //         this.error("Unexpected token:\n", this.tokens[this.current - 1].end);
-            //     }
-            // }
-            // else if (this.current - 2 >= 0) {
-            //     if (this.tokens[this.current - 2].type === ':') return this.previous();
-            // }
-            // else {
-            //     this.error("Unexpected end:\n", this.previous().end + 1);
-            // }
 
             while (this.match(types.WORD)) {
                 attr.lexeme += ' ' + this.previous().lexeme;
@@ -534,18 +522,24 @@ class Parser {
         if (type === 'CategorizedFilter') {
             rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right);
         }
+        else if (right instanceof PositiveSingleValue || right instanceof NegativeSingleValue || right instanceof ValueRange) {
+            this.error(type + " can not have " + right.type + " attribute:\n", right.begin);
+        }
         else if (type === 'Has') {
             rightObj = new Has(expr.key, new Token(':', ':', ':'), right);
         }
         else {
-            rightObj = new Sort(expr.key, new Token(':', ':', ':'), right);
+            if (arguments[3] !== undefined)
+                rightObj = new Sort(expr.key, new Token(':', ':', ':'), right, arguments[3]);
+            else
+                rightObj = new Sort(expr.key, new Token(':', ':', ':'), right);
         }
         return rightObj;
     }
 }
 
 try {
-    let t = new Parser('name: val1, val .. lav');
+    let t = new Parser('has: val1, val2 asc, val3, val4 desc');
     let res = t.parse();
     console.log(res);
 } catch (e) {
