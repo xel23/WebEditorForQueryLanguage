@@ -58,7 +58,6 @@ class Lexer {
                 }
                 break;
             }
-            // case '*': this.addToken('*', '*', this.start, this.current); break;
             case ',': this.addToken(',', ',', this.start, this.current); break; // ->>>
             case ' ':
             case '\t':
@@ -72,10 +71,6 @@ class Lexer {
                     else {
                         this.error("Unexpected token:\n", this.current - 1);
                     }
-                // }
-                // else {
-                //     this.error("Unexpected token switch2:\n",this.current - 1);
-                // }
             }
         }
     }

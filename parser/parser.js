@@ -229,9 +229,6 @@ class Parser {
                                 expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right, order));
                                 this.current++;
                             }
-                            // else {
-                            //     this.error("Unexpected order:\n", order.begin);
-                            // }
                         }
                         else {
                             expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right));
@@ -276,14 +273,6 @@ class Parser {
             expr = this.item(arguments[0]);
         else
             expr = this.item();
-
-        // while ((this.tokens[this.current].type === types.WORD || this.tokens[this.current].type === '#' ||
-        //     this.tokens[this.current].type === '-') && !(this.tokens[this.current].lexeme.toUpperCase() in operators)
-        //     && this.tokens[this.current - 1].type !== ',') {
-        //     let operator = new Token(types.OPERATOR, 'and', 'and');
-        //     let right = this.item();
-        //     expr = new Binary(expr, operator, right);
-        // }
 
         return expr;
     }
@@ -539,7 +528,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('sort by: val1, val2 two: name');
+    let t = new Parser('(a: b or a: g) and t: s');
     let res = t.parse();
     console.log(res);
 } catch (e) {
