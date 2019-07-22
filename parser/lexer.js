@@ -140,7 +140,7 @@ class Lexer {
     }
 
     isAlpha(c) {
-        return /[a-zA-Z_\-*?]/.test(c);
+        return /[a-zA-Z_\-*?.]/.test(c);
     }
 
     identifier() {

@@ -189,7 +189,7 @@ class Parser {
 
     parse() {
         let tree = this.getTree();
-        while (this.current < this.tokens.length - 1) {
+        while (this.current < this.tokens.length - 1 || tree instanceof Token) {
             let operator = new Token('OPERATOR', 'and', 'and');
             let rightTree = this.getTree();
             if (rightTree instanceof Token) {
@@ -527,26 +527,26 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('(a: b or a: g) and t: s');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Parser('(a: b or a: g) and t: s');
+//     let res = t.parse();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
-// document.getElementById('query').oninput = function () {
-//     try {
-//         let p = new Parser(document.getElementById('query').value);
-//         let res = p.parse();
-//         document.getElementById('result').value = JSON.stringify(res, null, 4);
-//     } catch (e) {
-//         if (e instanceof errorEx) {
-//             document.getElementById('result').value = e;
-//         } else {
-//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
-//         }
-//     }
-// };
+document.getElementById('query').oninput = function () {
+    try {
+        let p = new Parser(document.getElementById('query').value);
+        let res = p.parse();
+        document.getElementById('result').value = JSON.stringify(res, null, 4);
+    } catch (e) {
+        if (e instanceof errorEx) {
+            document.getElementById('result').value = e;
+        } else {
+            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+        }
+    }
+};
 
 module.exports = Parser;
