@@ -81,11 +81,12 @@ class PositiveSingleValue extends TermItem {
 class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
         super('NegativeSingleValue', minus.begin, value.right.end);
-        this.minus = minus.type;
+        this.minus = minus;
         this.lexeme = value.right.lexeme;
         this.literal = value.right.literal;
         this.begin = minus.begin;
         this.end = value.right.end;
+        this.value = value;
     }
 }
 
@@ -678,6 +679,50 @@ class Sort extends TermItem {
                     ),
                     new Token(':', ':', ':', 20, 21),
                     new Token('WORD', 's', 's', 22, 23)
+                )
+            )},
+
+    {input: 'test: my, -me', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 5),
+                    new Token('WORD', 'my', 'my', 6, 8)
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':'),
+                    new Token('WORD', 'me', 'me', 11, 13),
+                    new Token('-', '-', '-', 10, 11)
+                )
+            )},
+
+    {input: 'test: my, -me .. be', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 5),
+                    new Token('WORD', 'my', 'my', 6, 8)
+                ),
+                new Token('OPERATOR', 'or', 'or'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':'),
+                    new ValueRange(
+                        new Token('WORD', 'me', 'me', 11, 14),
+                        new Token('..', '..', '..', 14, 16),
+                        new Token('WORD', 'be', 'be', 17, 19)
+                    ),
+                    new Token('-', '-', '-', 10, 11)
                 )
             )},
 

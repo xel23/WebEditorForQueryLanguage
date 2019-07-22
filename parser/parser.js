@@ -69,11 +69,12 @@ class PositiveSingleValue extends TermItem {
 class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
         super('NegativeSingleValue', minus.begin, value.right.end);
-        this.minus = minus.type;
+        this.minus = minus;
         this.lexeme = value.right.lexeme;
         this.literal = value.right.literal;
         this.begin = minus.begin;
         this.end = value.right.end;
+        this.value = value;
     }
 }
 
@@ -217,7 +218,17 @@ class Parser {
                 this.current--;
                 if (this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) {
                     if (exprCommaHelper instanceof CategorizedFilter) {
-                        expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper, right));
+                        if (right instanceof NegativeSingleValue) {
+                            let minus = right.minus;
+                            expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper,
+                                right.value.right, minus));
+                        }
+                        else if (right instanceof PositiveSingleValue) {
+                            this.error("Unexpected PositiveSingleValue: \n", right.begin);
+                        }
+                        else {
+                            expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper, right));
+                        }
                     }
                     else if (exprCommaHelper instanceof Has) {
                         expr = new Binary(expr, operator, this.rightObj('Has', exprCommaHelper, right));
@@ -294,6 +305,9 @@ class Parser {
                 } else {
                     expr = new CategorizedFilter(new Attribute(expr), operator, right_1, minus);
                 }
+            }
+            else if (this.tokens[this.current].type === '#') {
+                this.error("Unexpected PositiveSingleValue in 'value':\n", this.tokens[this.current].begin)
             }
             else {
                 let right_1 = this.unary();
@@ -436,7 +450,9 @@ class Parser {
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
             this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end);
-        } else {
+        }
+
+        else {
             this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
         }
     }
@@ -509,7 +525,12 @@ class Parser {
     rightObj(type, expr, right) {
         let rightObj;
         if (type === 'CategorizedFilter') {
-            rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right);
+            if (arguments[3] !== undefined) {
+                rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right, arguments[3]);
+            }
+            else {
+                rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right);
+            }
         }
         else if (right instanceof PositiveSingleValue || right instanceof NegativeSingleValue || right instanceof ValueRange) {
             this.error(type + " can not have " + right.type + " attribute:\n", right.begin);
@@ -527,26 +548,26 @@ class Parser {
     }
 }
 
-// try {
-//     let t = new Parser('(a: b or a: g) and t: s');
-//     let res = t.parse();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
+try {
+    let t = new Parser('test: -my, te');
+    let res = t.parse();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
 
-document.getElementById('query').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('query').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-    } catch (e) {
-        if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
-        } else {
-            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
-        }
-    }
-};
+// document.getElementById('query').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('query').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 4);
+//     } catch (e) {
+//         if (e instanceof errorEx) {
+//             document.getElementById('result').value = e;
+//         } else {
+//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+//         }
+//     }
+// };
 
 module.exports = Parser;
