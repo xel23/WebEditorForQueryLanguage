@@ -593,6 +593,61 @@ class Sort extends TermItem {
                 )
             )},
 
+    {input: 'sort by: val1, val2 asc two: name', output:
+            new Binary(
+                new Binary(
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':', 7, 8),
+                        new Token('WORD', 'val1', 'val1', 9, 13)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 15, 20),
+                        new Token('WORD', 'asc', 'asc', 20, 24)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'two', 'two', 24, 27)
+                    ),
+                    new Token(':', ':', ':', 27, 28),
+                    new Token('WORD', 'name', 'name', 29, 33)
+                )
+            )},
+
+    {input: 'by: val1, val2 asc two: name', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'by', 'by', 0, 2)
+                        ),
+                        new Token(':', ':', ':', 2, 3),
+                        new Token('WORD', 'val1', 'val1', 4, 8)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'by', 'by', 0, 2)
+                        ),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'val2', 'val2', 10, 15),
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'asc two', 'asc two', 15, 22)
+                    ),
+                    new Token(':', ':', ':', 22, 23),
+                    new Token('WORD', 'name', 'name', 24, 28)
+                )
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);

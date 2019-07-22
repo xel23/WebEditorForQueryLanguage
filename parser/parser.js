@@ -229,9 +229,9 @@ class Parser {
                                 expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right, order));
                                 this.current++;
                             }
-                            else {
-                                this.error("Unexpected order:\n", order.begin);
-                            }
+                            // else {
+                            //     this.error("Unexpected order:\n", order.begin);
+                            // }
                         }
                         else {
                             expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right));
@@ -539,7 +539,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('has: val1, val2 asc, val3, val4 desc');
+    let t = new Parser('sort by: val1, val2 two: name');
     let res = t.parse();
     console.log(res);
 } catch (e) {
