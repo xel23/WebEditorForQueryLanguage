@@ -548,26 +548,26 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('test: t, -me .. me test: gg');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Parser('test: t, me and test: gg');
+//     let res = t.parse();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
-// document.getElementById('query').oninput = function () {
-//     try {
-//         let p = new Parser(document.getElementById('query').value);
-//         let res = p.parse();
-//         document.getElementById('result').value = JSON.stringify(res, null, 4);
-//     } catch (e) {
-//         if (e instanceof errorEx) {
-//             document.getElementById('result').value = e;
-//         } else {
-//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
-//         }
-//     }
-// };
+document.getElementById('query').oninput = function () {
+    try {
+        let p = new Parser(document.getElementById('query').value);
+        let res = p.parse();
+        document.getElementById('result').value = JSON.stringify(res, null, 4);
+    } catch (e) {
+        if (e instanceof errorEx) {
+            document.getElementById('result').value = e;
+        } else {
+            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+        }
+    }
+};
 
 module.exports = Parser;

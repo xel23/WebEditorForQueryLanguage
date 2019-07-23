@@ -719,6 +719,35 @@ class Sort extends TermItem {
                 )
             )},
 
+    {input: 'test: t, me test: gg', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'test', 'test', 0, 4)
+                        ),
+                        new Token(':', ':', ':', 4, 5),
+                        new Token('WORD', 't', 't', 6, 7)
+                    ),
+                    new Token('OPERATOR', 'or', 'or'),
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'test', 'test', 0, 4)
+                        ),
+                        new Token(':', ':', ':'),
+                        new Token('WORD', 'me', 'me', 9, 12)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 12, 16)
+                    ),
+                    new Token(':', ':', ':', 16, 17),
+                    new Token('WORD', 'gg', 'gg', 18, 20)
+                )
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);
