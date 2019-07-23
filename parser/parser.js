@@ -1,6 +1,3 @@
-// TO DO:
-// parentheses with 'and' and without and
-
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -211,6 +208,9 @@ class Parser {
             else {
                 let operator = new Token('OPERATOR', 'or', 'or');
                 let right = this.andExpression('value');
+                if (right instanceof Binary) {
+                    this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
+                }
                 this.current--;
                 if (this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) {
                     if (exprCommaHelper instanceof CategorizedFilter) {
@@ -401,7 +401,7 @@ class Parser {
                 return new Unary(operator, right);
             }
             else {
-                let right = this.item();
+                let right = this.item('value');
                 return new Unary(operator, right);
             }
         }
@@ -549,7 +549,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('test: t, -15 .. 20 and state: open');
+    let t = new Parser('test: t, -me .. me test: gg');
     let res = t.parse();
     console.log(res);
 } catch (e) {
