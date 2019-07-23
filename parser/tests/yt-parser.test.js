@@ -18,6 +18,7 @@ class Token {
 
 class Binary {
     constructor(left, operator, right) {
+        this.type = 'Binary';
         this.left = left;
         this.operator = operator;
         this.right = right;
@@ -26,6 +27,7 @@ class Binary {
 
 class Unary {
     constructor(operator, right) {
+        this.type = 'Unary';
         this.operator = operator;
         this.right = right;
     }
@@ -33,6 +35,7 @@ class Unary {
 
 class Grouping {
     constructor(left, expr, right) {
+        this.type = 'Grouping';
         this.left = left;
         this.expr = expr;
         this.right = right;
@@ -116,6 +119,11 @@ class AttributeFilter {
             this.end = value.rightVal.end;
         } else {
             this.type = value.type === 'QuotedText' ? value.type : 'Value';
+            if (arguments[1] !== undefined) {
+                if (arguments[1].type === '-' && this.type === 'QuotedText') {
+                    this.type = 'NegativeText';
+                }
+            }
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;

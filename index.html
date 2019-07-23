@@ -6,8 +6,38 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
     <style>
-        #result, #query {
+        #result, .query {
             font-family: 'Roboto Mono', monospace;
+        }
+        .PositiveSingleValue {
+            color: #ff761a;
+        }
+        .NegativeSingleValue {
+            color: #11c835;
+        }
+        .QuotedText {
+            color: #beffb7;
+        }
+        .NegativeText {
+            color: #ff30a1;
+        }
+        .key {
+            color: #ffdc22;
+        }
+        .Attribute, .Value {
+            color: #8d69ff;
+        }
+        .ValueRange {
+            color: #5dff59;
+        }
+        .operator {
+            color: #05d3ff;
+        }
+        .Attribute {
+            color: #ff95ab;
+        }
+        .Parentheses {
+            color: #ff0800;
         }
     </style>
 </head>
@@ -25,14 +55,24 @@
                 <div class="input-group-prepend">
                     <span class="input-group-text border-right-0 border-primary text-white bg-primary" id="basic-addon1">Query:</span>
                 </div>
-                <input id='query' type="text" class="form-control border-left-0 border-primary" placeholder="put your query here" aria-describedby="basic-addon1">
+                <input id="inQuery" type="text" class="form-control border-left-0 border-primary query" placeholder="put your query here" aria-describedby="basic-addon1">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text border-right-0 border-primary text-white bg-primary">Highlighted query:</span>
+                </div>
+                <div id="HQuery" class="form-control border-left-0 border-primary query bg-dark text-left" aria-describedby="basic-addon1"></div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col text-left">
             <label class="text-white" for="result">Result tree:</label>
-            <textarea id="result" class="form-control" rows="32"></textarea>
+            <textarea id="result" class="form-control" rows="30"></textarea>
         </div>
     </div>
 </div>

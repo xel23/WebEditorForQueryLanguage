@@ -6,6 +6,7 @@ const Token = require('./token');
 
 class Binary {
     constructor(left, operator, right) {
+        this.type = 'Binary';
         this.left = left;
         this.operator = operator;
         this.right = right;
@@ -14,6 +15,7 @@ class Binary {
 
 class Unary {
     constructor(operator, right) {
+        this.type = 'Unary';
         this.operator = operator;
         this.right = right;
     }
@@ -21,6 +23,7 @@ class Unary {
 
 class Grouping {
     constructor(left, expr, right) {
+        this.type = 'Grouping';
         this.left = left;
         this.expr = expr;
         this.right = right;
@@ -107,6 +110,11 @@ class AttributeFilter {
             this.end = value.rightVal.end;
         } else {
             this.type = value.type === 'QuotedText' ? value.type : 'Value';
+            if (arguments[1] !== undefined) {
+                if (arguments[1].type === '-' && this.type === 'QuotedText') {
+                    this.type = 'NegativeText';
+                }
+            }
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -433,7 +441,6 @@ class Parser {
 
         else if (this.match('"')) {
             let qt = new QuotedText(this.previous(), this.advance(), this.advance());
-            this.advance();
             return qt;
         }
 
@@ -548,26 +555,122 @@ class Parser {
     }
 }
 
-// try {
-//     let t = new Parser('test: t, me and test: gg');
-//     let res = t.parse();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
+try {
+    let t = new Parser('test: "name" n n: hi');
+    let res = t.parse();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
 
-document.getElementById('query').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('query').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-    } catch (e) {
-        if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
-        } else {
-            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+function traverse(obj, str) {
+    let i;
+    let resString = "";
+    for (let key in obj) {
+        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' && !(obj[key] instanceof Grouping)) {
+            resString += traverse(obj[key], str);
+        }
+        else if (obj[key] instanceof Grouping) {
+            resString +=  '<span class="Parentheses">(</span>';
+            resString += traverse(obj[key], str);
+            resString +=  '<span class="Parentheses">) </span>';
+        }
+        else {
+            if (key === 'type') {
+                switch (obj.type) {
+                    case 'PositiveSingleValue': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'NegativeSingleValue': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'QuotedText': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + ' </span>';
+                        break;
+                    }
+                    case 'NegativeText': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + ' </span>';
+                        break;
+                    }
+                    case 'key': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'Attribute': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'Value': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'ValueRange': {
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        break;
+                    }
+                    case 'OPERATOR':
+                    case ':':
+                    case '-':
+                    case '#':
+                    case ',': {
+                        if ('begin' in obj) {
+                            resString += '<span class="operator">' + str.substring(obj.begin, obj.end) + ' </span>';
+                        }
+                        else if (obj.lexeme === 'or') {
+                            resString += '<span class="operator">, </span>';
+                        }
+                        break;
+                    }
+                    default: break;
+                }
+            }
         }
     }
-};
+    return resString;
+}
+
+let res1 = new Grouping(
+    new Token('(', '(', '(', 0, 1),
+    new Binary(
+        new CategorizedFilter(
+            new Attribute(
+                new Token('WORD', 'a', 'a', 1, 2)
+            ),
+            new Token(':', ':', ':', 2, 3),
+            new Token('WORD', 'b', 'b', 4, 6)
+        ),
+        new Token('OPERATOR', 'or', 'or', 6, 9),
+        new CategorizedFilter(
+            new Attribute(
+                new Token('WORD', 'a', 'a', 9, 10)
+            ),
+            new Token(':', ':', ':', 10, 11),
+            new Token('WORD', 'g', 'g', 12, 13)
+        )
+    ),
+    new Token(')', ')', ')', 13, 14)
+);
+
+// let hRes = traverse(res1, '(a: b or a: g)');
+// document.getElementById('HQuery').innerHTML = hRes;
+
+
+// document.getElementById('inQuery').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('inQuery').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 4);
+//         let hRes = traverse(res, document.getElementById('inQuery').value);
+//         document.getElementById('HQuery').innerHTML = hRes;
+//     } catch (e) {
+//         if (e instanceof errorEx) {
+//             document.getElementById('result').value = e;
+//         } else {
+//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+//         }
+//     }
+// };
 
 module.exports = Parser;
