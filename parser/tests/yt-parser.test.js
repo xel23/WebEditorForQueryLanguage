@@ -89,7 +89,7 @@ class NegativeSingleValue extends TermItem {
         this.literal = value.right.literal;
         this.begin = minus.begin;
         this.end = value.right.end;
-        this.value = value;
+        this._value = value;
     }
 }
 
@@ -180,7 +180,7 @@ class CategorizedFilter extends TermItem {
             attributeFilter.forEach((element) => {
                 if (element instanceof NegativeSingleValue) {
                     let minus = element.minus;
-                    this.attributeFilter.push(new AttributeFilter(element.value.right, minus));
+                    this.attributeFilter.push(new AttributeFilter(element._value.right, minus));
                 }
                 else {
                     this.attributeFilter.push(new AttributeFilter(element));

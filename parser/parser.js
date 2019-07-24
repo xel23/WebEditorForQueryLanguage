@@ -77,7 +77,7 @@ class NegativeSingleValue extends TermItem {
         this.literal = value.right.literal;
         this.begin = minus.begin;
         this.end = value.right.end;
-        this.value = value;
+        this._value = value;
     }
 }
 
@@ -136,11 +136,11 @@ class Attribute {
 class Has extends TermItem {
     constructor(has, operator, value) {
         super('Has', has.begin, value.end);
-        this.value = [];
-        this.value.push(new Attribute(value));
         this.key = has;
         this.key.type = 'key';
         this.operator = operator;
+        this.value = [];
+        this.value.push(new Attribute(value));
     }
 
     addAttribute(token) {
@@ -263,7 +263,7 @@ class Parser {
                     if (exprCommaHelper instanceof CategorizedFilter) {
                         if (right instanceof NegativeSingleValue) {
                             let minus = right.minus;
-                            expr.addAttributeFilter(right.value.right, minus);
+                            expr.addAttributeFilter(right._value.right, minus);
                         }
                         else if (right instanceof PositiveSingleValue) {
                             this.error("Unexpected PositiveSingleValue: \n", right.begin);
@@ -294,7 +294,7 @@ class Parser {
                             }
                         }
                         else {
-                            this.error(expr.type + " does not support comma operator:\n", expr.begin);
+                            this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
                         }
                     }
                 }
@@ -620,7 +620,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('(a:b l:l)');
+    let t = new Parser('a:v');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -631,7 +631,8 @@ function traverse(obj, str) {
     let i;
     let resString = "";
     for (let key in obj) {
-        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' && !(obj[key] instanceof Grouping) && key !== 'attributeFilter') {
+        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' &&
+            !(obj[key] instanceof Grouping) && key !== 'attributeFilter' && key !== 'value') {
             resString += traverse(obj[key], str);
         }
         else if (obj[key] instanceof Grouping) {
@@ -695,37 +696,43 @@ function traverse(obj, str) {
                     resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
                 }
             }
+            else if (key === 'value') {
+                resString += '<span class="' + obj[key][0].type + '">' + str.substring(obj[key][0].begin, obj[key][0].end) + '</span>';
+                for (let cur = 1; cur < obj[key].length; cur++) {
+                    resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                }
+            }
         }
     }
     return resString;
 }
 
-let res1 = new Has(
-    new Token('WORD', 'has', 'has', 0, 3),
-    new Token(':', ':', ':', 3, 4),
-    [
-        new Token('Value', 'a', 'a', 5, 6)
-    ]
+let res1 = new NegativeSingleValue(
+    new Token('-', '-', '-', 0, 1),
+    new Unary(
+        new Token('-', '-', '-', 0, 1),
+        new Token('WORD', 'c', 'c', 1,2)
+    )
 );
 
-// let hRes = traverse(res1, 'has: a');
+// let hRes = traverse(res1, '-c');
 // document.getElementById('HQuery').innerHTML = hRes;
 
 
-// document.getElementById('inQuery').oninput = function () {
-//     try {
-//         let p = new Parser(document.getElementById('inQuery').value);
-//         let res = p.parse();
-//         document.getElementById('result').value = JSON.stringify(res, null, 4);
-//         let hRes = traverse(res, document.getElementById('inQuery').value);
-//         document.getElementById('HQuery').innerHTML = hRes;
-//     } catch (e) {
-//         if (e instanceof errorEx) {
-//             document.getElementById('result').value = e;
-//         } else {
-//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
-//         }
-//     }
-// };
+document.getElementById('inQuery').oninput = function () {
+    try {
+        let p = new Parser(document.getElementById('inQuery').value);
+        let res = p.parse();
+        document.getElementById('result').value = JSON.stringify(res, null, 4);
+        let hRes = traverse(res, document.getElementById('inQuery').value);
+        document.getElementById('HQuery').innerHTML = hRes;
+    } catch (e) {
+        if (e instanceof errorEx) {
+            document.getElementById('result').value = e;
+        } else {
+            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+        }
+    }
+};
 
 module.exports = Parser;
