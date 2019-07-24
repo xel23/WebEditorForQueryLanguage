@@ -1,4 +1,4 @@
-// TO DO: arrays for commas
+// TO DO:
 // key after comma
 
 const lexer = require('./lexer');
@@ -259,7 +259,8 @@ class Parser {
                     this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
                 }
                 this.current--;
-                if (this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) {
+                if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) &&
+                    !(right instanceof CategorizedFilter || right instanceof Has || right instanceof Sort)) {
                     if (exprCommaHelper instanceof CategorizedFilter) {
                         if (right instanceof NegativeSingleValue) {
                             let minus = right.minus;
@@ -483,6 +484,15 @@ class Parser {
             return attr;
         }
         else if (this.match(types.WORD) || this.match('COMPLEX_VALUE')) {
+            let attr = this.previous();
+            if (attr.lexeme === 'sort') {
+                let by = this.advance();
+                if (by.lexeme === 'by') {
+                    attr.lexeme += ' ' + by.lexeme;
+                    attr.literal += ' ' + by.literal;
+                    attr.end = by.end;
+                }
+            }
             return this.previous();
         }
 
@@ -603,7 +613,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('sort by: kk asc, tt desc');
+    let t = new Parser('sort by: kk, sort by: desc');
     let res = t.parse();
     console.log(res);
 } catch (e) {
