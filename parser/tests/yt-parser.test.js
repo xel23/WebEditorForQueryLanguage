@@ -148,24 +148,25 @@ class Attribute {
 class Has extends TermItem {
     constructor(has, operator, value) {
         super('Has', has.begin, value.end);
-        this.attribute = [];
+        this.value = [];
 
         if (value instanceof Array) {
             value.forEach((element) => {
-                this.attribute.push(new Attribute(element));
+                this.value.push(new Attribute(element));
                 this.end = element.end;
             })
         }
         else {
-            this.attribute.push(new Attribute(value));
+            this.value.push(new Attribute(value));
         }
 
         this.key = has;
+        this.key.type = 'key';
         this.operator = operator;
     }
 
     addAttribute(token) {
-        this.attribute.push(new Attribute(token));
+        this.value.push(new Attribute(token));
     }
 }
 
@@ -229,6 +230,7 @@ class Sort extends TermItem {
     constructor(sortBy, operator, value) {
         super('Sort', sortBy.begin, value.end);
         this.key = sortBy;
+        this.key.type = 'key';
         this.operator = operator;
         this.value = [];
         if (value instanceof Array) {
@@ -335,7 +337,7 @@ class Sort extends TermItem {
             new Has(
                 new Token('WORD', 'has', 'has', 0, 3),
                 new Token(':', ':', ':', 3, 4),
-                new Token('WORD', 'field', 'field', 5, 10)
+                new Token('Value', 'field', 'field', 5, 10)
             )},
 
     {input: 'a: -bb .. cc has: field', output:
@@ -356,9 +358,7 @@ class Sort extends TermItem {
                 new Has(
                     new Token('WORD', 'has', 'has', 13, 16),
                     new Token(':', ':', ':', 16, 17),
-                    new Attribute(
-                        new Token('WORD', 'field', 'field', 18, 23)
-                    )
+                    new Token('Value', 'field', 'field', 18, 23)
                 )
             )},
 
@@ -435,7 +435,7 @@ class Sort extends TermItem {
             new Sort(
                 new Token('WORD', 'sort by', 'sort by', 0, 7),
                 new Token(':', ':', ':', 7, 8),
-                new Token('WORD', 'field', 'field', 9, 14)
+                new Token('Value', 'field', 'field', 9, 14)
             )},
 
     {input: 'a: b sort by: field', output:
@@ -453,7 +453,7 @@ class Sort extends TermItem {
                 new Sort(
                     new Token('WORD', 'sort by', 'sort by', 5, 12),
                     new Token(':', ':', ':', 12, 13),
-                    new Token('WORD', 'field', 'field', 14, 19)
+                    new Token('Value', 'field', 'field', 14, 19)
                 )
             )},
 
@@ -566,9 +566,9 @@ class Sort extends TermItem {
                 new Token('WORD', 'has', 'has', 0, 3),
                 new Token(':', ':', ':', 3, 4),
                 [
-                    new Token('WORD', 'val1', 'val1', 5, 9),
-                    new Token('WORD', 'val2', 'val2', 11, 15),
-                    new Token('WORD', 'val3', 'val3', 17, 21),
+                    new Token('Value', 'val1', 'val1', 5, 9),
+                    new Token('Value', 'val2', 'val2', 11, 15),
+                    new Token('Value', 'val3', 'val3', 17, 21),
                 ]
             )},
 
@@ -577,9 +577,9 @@ class Sort extends TermItem {
                 new Token('WORD', 'sort by', 'sort by', 0, 7),
                 new Token(':', ':', ':', 7, 8),
                 [
-                    new Token('WORD', 'val1', 'val1', 9, 13),
-                    new Token('WORD', 'val2', 'val2', 15, 19),
-                    new Token('WORD', 'val3', 'val3', 21, 25)
+                    new Token('Value', 'val1', 'val1', 9, 13),
+                    new Token('Value', 'val2', 'val2', 15, 19),
+                    new Token('Value', 'val3', 'val3', 21, 25)
                 ]
             )},
 
@@ -588,9 +588,9 @@ class Sort extends TermItem {
                 new Token('WORD', 'sort by', 'sort by', 0, 7),
                 new Token(':', ':', ':', 7, 8),
                 [
-                    new Token('WORD', 'val1', 'val1', 9, 13),
-                    new Token('WORD', 'val2 asc', 'val2 asc', 15, 24),
-                    new Token('WORD', 'val3', 'val3', 26, 30)
+                    new Token('Value', 'val1', 'val1', 9, 13),
+                    new Token('Value', 'val2 asc', 'val2 asc', 15, 24),
+                    new Token('Value', 'val3', 'val3', 26, 30)
                 ]
             )},
 
@@ -600,8 +600,8 @@ class Sort extends TermItem {
                     new Token('WORD', 'sort by', 'sort by', 0, 7),
                     new Token(':', ':', ':', 7, 8),
                     [
-                        new Token('WORD', 'val1', 'val1', 9, 13),
-                        new Token('WORD', 'val2 asc', 'val2 asc', 15, 24)
+                        new Token('Value', 'val1', 'val1', 9, 13),
+                        new Token('Value', 'val2 asc', 'val2 asc', 15, 24)
                     ]
                 ),
                 new Token('OPERATOR', 'and', 'and'),

@@ -1,6 +1,3 @@
-// TO DO:
-// key after comma
-
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -139,14 +136,15 @@ class Attribute {
 class Has extends TermItem {
     constructor(has, operator, value) {
         super('Has', has.begin, value.end);
-        this.attribute = [];
-        this.attribute.push(new Attribute(value));
+        this.value = [];
+        this.value.push(new Attribute(value));
         this.key = has;
+        this.key.type = 'key';
         this.operator = operator;
     }
 
     addAttribute(token) {
-        this.attribute.push(new Attribute(token));
+        this.value.push(new Attribute(token));
         this.end = token.end;
     }
 }
@@ -190,6 +188,7 @@ class Sort extends TermItem {
     constructor(sortBy, operator, value) {
         super('Sort', sortBy.begin, value.end);
         this.key = sortBy;
+        this.key.type = 'key';
         this.operator = operator;
         this.value = [];
         if (arguments[3] !== undefined) {
@@ -259,7 +258,7 @@ class Parser {
                     this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
                 }
                 this.current--;
-                if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || right instanceof Unary) &&
+                if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || this.match(types.COMPLEX_VALUE) || right instanceof Unary) &&
                     !(right instanceof CategorizedFilter || right instanceof Has || right instanceof Sort)) {
                     if (exprCommaHelper instanceof CategorizedFilter) {
                         if (right instanceof NegativeSingleValue) {
@@ -278,6 +277,7 @@ class Parser {
                         this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
                     }
                     else {
+                        right.type = 'Value';
                         if (exprCommaHelper instanceof Has) {
                             expr.addAttribute(right);
                         }
@@ -298,9 +298,6 @@ class Parser {
                         }
                     }
                 }
-                // else if (right.type === '-' || right.type !== '#') {
-                //
-                // }
                 else {
                     this.error("Unexpected value after comma:\n", right.begin);
                 }
@@ -376,6 +373,7 @@ class Parser {
                         expr = new CategorizedFilter(new Attribute(expr), operator, right);
                     }
                 } else {
+                    right_1.type = 'Value';
                     if (expr.lexeme === 'has') {
                         expr = new Has(expr, operator, right_1);
                     }
@@ -474,8 +472,14 @@ class Parser {
         if (this.tokens[this.current].type === types.WORD && arguments[0] === 'key') {
             this.current++;
             let attr = this.previous();
+            if (attr.lexeme.toUpperCase() in operators) {
+                this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be key.\n", attr.begin);
+            }
 
             while (this.match(types.WORD)) {
+                if (this.previous().lexeme.toUpperCase() in operators) {
+                    this.error("Operator '" + this.previous().lexeme.toUpperCase() + "' can not be key.\n", this.previous().begin);
+                }
                 attr.lexeme += ' ' + this.previous().lexeme;
                 attr.literal += ' ' + this.previous().literal;
                 attr.end = this.previous().end;
@@ -485,6 +489,9 @@ class Parser {
         }
         else if (this.match(types.WORD) || this.match('COMPLEX_VALUE')) {
             let attr = this.previous();
+            if (attr.lexeme.toUpperCase() in operators) {
+                this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be value.\n", attr.begin);
+            }
             if (attr.lexeme === 'sort') {
                 let by = this.advance();
                 if (by.lexeme === 'by') {
@@ -613,7 +620,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('sort by: kk, sort by: desc');
+    let t = new Parser('(a:b l:l)');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -624,7 +631,7 @@ function traverse(obj, str) {
     let i;
     let resString = "";
     for (let key in obj) {
-        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' && !(obj[key] instanceof Grouping)) {
+        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' && !(obj[key] instanceof Grouping) && key !== 'attributeFilter') {
             resString += traverse(obj[key], str);
         }
         else if (obj[key] instanceof Grouping) {
@@ -670,8 +677,7 @@ function traverse(obj, str) {
                     case 'OPERATOR':
                     case ':':
                     case '-':
-                    case '#':
-                    case ',': {
+                    case '#': {
                         if ('begin' in obj) {
                             resString += '<span class="operator">' + str.substring(obj.begin, obj.end) + ' </span>';
                         }
@@ -683,10 +689,10 @@ function traverse(obj, str) {
                     default: break;
                 }
             }
-            if (key === 'AttributeFilter') {
-                resString += '<span class="' + key[0].type + '">' + str.substring(key[0].begin, key[0].end) + ' </span>';
-                for (let j = 1; j < key.length; j++) {
-                    resString += '<span class="' + key[0].type + '">' + str.substring(key[0].begin, key[0].end) + ' </span>';
+            else if (key === 'attributeFilter') {
+                resString += '<span class="' + obj[key][0].type + '">' + str.substring(obj[key][0].begin, obj[key][0].end) + '</span>';
+                for (let cur = 1; cur < obj[key].length; cur++) {
+                    resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
                 }
             }
         }
@@ -694,29 +700,15 @@ function traverse(obj, str) {
     return resString;
 }
 
-let res1 = new Grouping(
-    new Token('(', '(', '(', 0, 1),
-    new Binary(
-        new CategorizedFilter(
-            new Attribute(
-                new Token('WORD', 'a', 'a', 1, 2)
-            ),
-            new Token(':', ':', ':', 2, 3),
-            new Token('WORD', 'b', 'b', 4, 6)
-        ),
-        new Token('OPERATOR', 'or', 'or', 6, 9),
-        new CategorizedFilter(
-            new Attribute(
-                new Token('WORD', 'a', 'a', 9, 10)
-            ),
-            new Token(':', ':', ':', 10, 11),
-            new Token('WORD', 'g', 'g', 12, 13)
-        )
-    ),
-    new Token(')', ')', ')', 13, 14)
+let res1 = new Has(
+    new Token('WORD', 'has', 'has', 0, 3),
+    new Token(':', ':', ':', 3, 4),
+    [
+        new Token('Value', 'a', 'a', 5, 6)
+    ]
 );
 
-// let hRes = traverse(res1, '(a: b or a: g)');
+// let hRes = traverse(res1, 'has: a');
 // document.getElementById('HQuery').innerHTML = hRes;
 
 
