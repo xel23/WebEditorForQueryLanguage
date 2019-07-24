@@ -1,3 +1,6 @@
+// TO DO: arrays for commas
+// key after comma
+
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -136,9 +139,15 @@ class Attribute {
 class Has extends TermItem {
     constructor(has, operator, value) {
         super('Has', has.begin, value.end);
-        this.attribute = new Attribute(value);
+        this.attribute = [];
+        this.attribute.push(new Attribute(value));
         this.key = has;
         this.operator = operator;
+    }
+
+    addAttribute(token) {
+        this.attribute.push(new Attribute(token));
+        this.end = token.end;
     }
 }
 
@@ -147,10 +156,20 @@ class CategorizedFilter extends TermItem {
         super('CategorizedFilter', attribute.begin, attributeFilter instanceof ValueRange ? attributeFilter.rightVal.end : attributeFilter.end);
         this.attribute = attribute;
         this.operator = operator;
+        this.attributeFilter = [];
         if (arguments[3] !== undefined)
-            this.attributeFilter = new AttributeFilter(attributeFilter, arguments[3]);
+            this.attributeFilter.push(new AttributeFilter(attributeFilter, arguments[3]));
         else
-            this.attributeFilter = new AttributeFilter(attributeFilter);
+            this.attributeFilter.push(new AttributeFilter(attributeFilter));
+    }
+
+    addAttributeFilter(token) {
+        this.end = token instanceof ValueRange ? token.rightVal.end : token.end;
+
+        if (arguments[1] !== undefined)
+            this.attributeFilter.push(new AttributeFilter(token, arguments[1]));
+        else
+            this.attributeFilter.push(new AttributeFilter(token));
     }
 }
 
@@ -161,6 +180,9 @@ class SortAttribute {
         this.literal = value.literal;
         this.begin = value.begin;
         this.end = value.end;
+        if (arguments[1] !== undefined) {
+            this.order = arguments[1];
+        }
     }
 }
 
@@ -169,9 +191,24 @@ class Sort extends TermItem {
         super('Sort', sortBy.begin, value.end);
         this.key = sortBy;
         this.operator = operator;
-        this.value = new SortAttribute(value);
+        this.value = [];
         if (arguments[3] !== undefined) {
-            this.order = arguments[3];
+            this.value.push(new SortAttribute(value, arguments[3]));
+            this.end = arguments[3].end;
+        }
+        else {
+            this.value.push(new SortAttribute(value));
+        }
+    }
+
+    addValue(token) {
+        if (arguments[1] !== undefined) {
+            this.value.push(new SortAttribute(token, arguments[1]));
+            this.end = arguments[1].end;
+        }
+        else {
+            this.value.push(new SortAttribute(token));
+            this.end = token.end;
         }
     }
 }
@@ -211,10 +248,12 @@ class Parser {
                 let operator = this.previous();
                 operator.type = 'OPERATOR';
                 let right = this.andExpression();
+                if (right.type === types.WORD) {
+                    this.error("Incomplete query after:\n", right.begin - 1);
+                }
                 expr = new Binary(expr, operator, right);
             }
             else {
-                let operator = new Token('OPERATOR', 'or', 'or');
                 let right = this.andExpression('value');
                 if (right instanceof Binary) {
                     this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
@@ -224,38 +263,43 @@ class Parser {
                     if (exprCommaHelper instanceof CategorizedFilter) {
                         if (right instanceof NegativeSingleValue) {
                             let minus = right.minus;
-                            expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper,
-                                right.value.right, minus));
+                            expr.addAttributeFilter(right.value.right, minus);
                         }
                         else if (right instanceof PositiveSingleValue) {
                             this.error("Unexpected PositiveSingleValue: \n", right.begin);
                         }
                         else {
-                            expr = new Binary(expr, operator, this.rightObj('CategorizedFilter', exprCommaHelper, right));
+                            expr.addAttributeFilter(right);
                         }
                     }
-                    else if (exprCommaHelper instanceof Has) {
-                        expr = new Binary(expr, operator, this.rightObj('Has', exprCommaHelper, right));
+                    else if (right instanceof ValueRange || right instanceof NegativeSingleValue ||
+                        right instanceof PositiveSingleValue) {
+                        this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
                     }
-                    else if (exprCommaHelper instanceof Sort) {
-                        let order = this.tokens[this.current];
-                        if (order.type === types.WORD) {
-                            if (order.literal === 'asc' || order.literal === 'desc') {
-                                expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right, order));
-                                this.current++;
+                    else {
+                        if (exprCommaHelper instanceof Has) {
+                            expr.addAttribute(right);
+                        }
+                        else if (exprCommaHelper instanceof Sort) {
+                            let order = this.tokens[this.current];
+                            if (order.type === types.WORD) {
+                                if (order.literal === 'asc' || order.literal === 'desc') {
+                                    expr.addValue(right, order);
+                                    this.current++;
+                                }
+                            }
+                            else {
+                                expr.addValue(right);
                             }
                         }
                         else {
-                            expr = new Binary(expr, operator, this.rightObj('Sort', exprCommaHelper, right));
+                            this.error(expr.type + " does not support comma operator:\n", expr.begin);
                         }
                     }
-                    else {
-                        this.error(expr.type + " does not support comma operator:\n", expr.begin);
-                    }
                 }
-                else if (right.type === '-' || right.type !== '#') {
-
-                }
+                // else if (right.type === '-' || right.type !== '#') {
+                //
+                // }
                 else {
                     this.error("Unexpected value after comma:\n", right.begin);
                 }
@@ -276,6 +320,9 @@ class Parser {
             let operator = this.previous();
             operator.type = 'OPERATOR';
             let right = this.andOperand();
+            if (right.type === types.WORD) {
+                this.error("Incomplete query after: \n", right.begin - 1);
+            }
             if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
                 || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue || expr instanceof Grouping)) {
                 this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
@@ -556,7 +603,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('test: "name" n n: hi');
+    let t = new Parser('sort by: kk asc, tt desc');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -624,6 +671,12 @@ function traverse(obj, str) {
                         break;
                     }
                     default: break;
+                }
+            }
+            if (key === 'AttributeFilter') {
+                resString += '<span class="' + key[0].type + '">' + str.substring(key[0].begin, key[0].end) + ' </span>';
+                for (let j = 1; j < key.length; j++) {
+                    resString += '<span class="' + key[0].type + '">' + str.substring(key[0].begin, key[0].end) + ' </span>';
                 }
             }
         }
