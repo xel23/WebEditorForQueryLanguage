@@ -83,12 +83,10 @@ class PositiveSingleValue extends TermItem {
 
 class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
-        super('NegativeSingleValue', minus.begin, value.right.end);
+        super('NegativeSingleValue', value.begin, value.end);
         this.minus = minus;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = minus.begin;
-        this.end = value.right.end;
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
         this._value = value;
     }
 }
@@ -106,7 +104,7 @@ class ValueRange {
 
 class AttributeFilter {
     constructor(value) {
-        if (arguments[1] !== undefined) this.operator = arguments[1];
+        // if (arguments[1] !== undefined) this.operator = arguments[1];
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
@@ -120,13 +118,17 @@ class AttributeFilter {
             this.vr_operator = value.operator;
             this.begin = value.leftVal.begin;
             this.end = value.rightVal.end;
-        } else {
-            this.type = value.type === 'QuotedText' ? value.type : 'Value';
-            if (arguments[1] !== undefined) {
-                if (arguments[1].type === '-' && this.type === 'QuotedText') {
-                    this.type = 'NegativeText';
-                }
-            }
+        }
+        else if (value instanceof NegativeSingleValue) {
+            this.type = value.type;
+            this.operator = value.minus;
+            this.lexeme = value.lexeme;
+            this.literal = value.literal;
+            this.begin = value.begin;
+            this.end = value.end;
+        }
+        else {
+            this.type = value.type === 'WORD' ? 'Value' : value.type;
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -178,21 +180,12 @@ class CategorizedFilter extends TermItem {
         this.attributeFilter = [];
         if (attributeFilter instanceof Array) {
             attributeFilter.forEach((element) => {
-                if (element instanceof NegativeSingleValue) {
-                    let minus = element.minus;
-                    this.attributeFilter.push(new AttributeFilter(element._value.right, minus));
-                }
-                else {
-                    this.attributeFilter.push(new AttributeFilter(element));
-                }
+                this.attributeFilter.push(new AttributeFilter(element));
                 this.end = element.end;
             })
         }
         else {
-            if (arguments[3] !== undefined)
-                this.attributeFilter.push(new AttributeFilter(attributeFilter, arguments[3]));
-            else
-                this.attributeFilter.push(new AttributeFilter(attributeFilter));
+            this.attributeFilter.push(new AttributeFilter(attributeFilter));
         }
     }
 
@@ -283,8 +276,10 @@ class Sort extends TermItem {
                     new Token('WORD', 'a', 'a', 0, 1)
                 ),
                 new Token(':', ':', ':', 1, 2),
-                new Token('WORD', 'b', 'b', 4, 5),
-                new Token('-', '-', '-', 3, 4)
+                new NegativeSingleValue(
+                    new Token('-', '-', '-', 3, 4),
+                    new Token('WORD', 'b', 'b', 4, 5)
+                )
             )},
 
     {input: 'a: bb .. cc', output:
@@ -315,8 +310,10 @@ class Sort extends TermItem {
                     new Token('WORD', 'a', 'a', 0, 1)
                 ),
                 new Token(':', ':', ':', 1, 2),
-                new Token('WORD', 'bb .. cc', 'bb .. cc', 4, 14),
-                new Token('-', '-', '-', 3, 4)
+                new NegativeSingleValue(
+                    new Token('-', '-', '-', 3, 4),
+                    new Token('WORD', 'bb .. cc', 'bb .. cc', 4, 14)
+                )
             )},
 
     {input: 'a: -bb .. cc', output:
@@ -460,10 +457,7 @@ class Sort extends TermItem {
     {input: '-c', output:
             new NegativeSingleValue(
                 new Token('-', '-', '-', 0, 1),
-                new Unary(
-                    new Token('-', '-', '-', 0, 1),
-                    new Token('WORD', 'c', 'c', 1, 2)
-                )
+                new Token('WORD', 'c', 'c', 1, 2)
             )},
 
     {input: '#c', output:
@@ -487,10 +481,7 @@ class Sort extends TermItem {
                 new Token('OPERATOR', 'and', 'and'),
                 new NegativeSingleValue(
                     new Token('-', '-', '-', 3, 4),
-                    new Unary(
-                        new Token('-', '-', '-', 3, 4),
-                        new Token('WORD', 'n', 'n', 4, 5)
-                    )
+                    new Token('WORD', 'n', 'n', 4, 5)
                 )
             )},
 
@@ -506,10 +497,7 @@ class Sort extends TermItem {
                 new Token('OPERATOR', 'and', 'and'),
                 new NegativeSingleValue(
                     new Token('-', '-', '-', 4, 5),
-                    new Unary(
-                        new Token('-', '-', '-', 4, 5),
-                        new Token('WORD', 'n', 'n', 5, 6)
-                    )
+                    new Token('WORD', 'n', 'n', 5, 6)
                 )
             )},
 
@@ -679,10 +667,7 @@ class Sort extends TermItem {
                     new Token('WORD', 'my', 'my', 6, 8),
                     new NegativeSingleValue(
                         new Token('-', '-', '-', 10, 11),
-                        new Unary(
-                            new Token('-', '-', '-', 10, 11),
-                            new Token('WORD', 'me', 'me', 11, 13)
-                        )
+                        new Token('WORD', 'me', 'me', 11, 13)
                     )
                 ]
             )},
@@ -697,14 +682,10 @@ class Sort extends TermItem {
                     new Token('WORD', 'my', 'my', 6, 8),
                     new NegativeSingleValue(
                         new Token('-', '-', '-', 10, 11),
-                        new Unary(
-                            new Token('-', '-', '-', 10, 11),
-                            new ValueRange(
-                                new Token('WORD', 'me', 'me', 11, 14),
-                                new Token('..', '..', '..', 14, 16),
-                                new Token('WORD', 'be', 'be', 17, 19),
-
-                            )
+                        new ValueRange(
+                            new Token('WORD', 'me', 'me', 11, 14),
+                            new Token('..', '..', '..', 14, 16),
+                            new Token('WORD', 'be', 'be', 17, 19),
                         )
                     )
                 ]

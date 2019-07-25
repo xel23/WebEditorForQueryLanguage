@@ -71,12 +71,10 @@ class PositiveSingleValue extends TermItem {
 
 class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
-        super('NegativeSingleValue', minus.begin, value.right.end);
+        super('NegativeSingleValue', value.begin, value.end);
         this.minus = minus;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = minus.begin;
-        this.end = value.right.end;
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
         this._value = value;
     }
 }
@@ -94,7 +92,7 @@ class ValueRange {
 
 class AttributeFilter {
     constructor(value) {
-        if (arguments[1] !== undefined) this.operator = arguments[1];
+        // if (arguments[1] !== undefined) this.operator = arguments[1];
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
@@ -108,13 +106,17 @@ class AttributeFilter {
             this.vr_operator = value.operator;
             this.begin = value.leftVal.begin;
             this.end = value.rightVal.end;
-        } else {
-            this.type = value.type === 'QuotedText' ? value.type : 'Value';
-            if (arguments[1] !== undefined) {
-                if (arguments[1].type === '-' && this.type === 'QuotedText') {
-                    this.type = 'NegativeText';
-                }
-            }
+        }
+        else if (value instanceof NegativeSingleValue) {
+            this.type = value.type;
+            this.operator = value.minus;
+            this.lexeme = value.lexeme;
+            this.literal = value.literal;
+            this.begin = value.begin;
+            this.end = value.end;
+        }
+        else {
+            this.type = value.type === 'WORD' ? 'Value' : value.type;
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -130,6 +132,11 @@ class Attribute {
         this.literal = value.literal;
         this.begin = value.begin;
         this.end = value.end;
+        if (value instanceof NegativeSingleValue) {
+            this.begin = value.minus.end;
+            this.operator = value.minus;
+        }
+        if (arguments[1] !== undefined) this.operator = arguments[1];
     }
 }
 
@@ -140,7 +147,12 @@ class Has extends TermItem {
         this.key.type = 'key';
         this.operator = operator;
         this.value = [];
-        this.value.push(new Attribute(value));
+        if (arguments[3] !== undefined) {
+            this.value.push(new Attribute(value, arguments[3]));
+        }
+        else {
+            this.value.push(new Attribute(value));
+        }
     }
 
     addAttribute(token) {
@@ -155,19 +167,14 @@ class CategorizedFilter extends TermItem {
         this.attribute = attribute;
         this.operator = operator;
         this.attributeFilter = [];
-        if (arguments[3] !== undefined)
-            this.attributeFilter.push(new AttributeFilter(attributeFilter, arguments[3]));
-        else
-            this.attributeFilter.push(new AttributeFilter(attributeFilter));
+
+        this.attributeFilter.push(new AttributeFilter(attributeFilter));
     }
 
     addAttributeFilter(token) {
         this.end = token instanceof ValueRange ? token.rightVal.end : token.end;
 
-        if (arguments[1] !== undefined)
-            this.attributeFilter.push(new AttributeFilter(token, arguments[1]));
-        else
-            this.attributeFilter.push(new AttributeFilter(token));
+        this.attributeFilter.push(new AttributeFilter(token));
     }
 }
 
@@ -281,26 +288,15 @@ class Parser {
 
         while (this.match(',')) {
             let right = this.item('value');
-            if (right instanceof Binary) {
-                this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
-            }
             this.current--;
-            if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || this.match(types.COMPLEX_VALUE) || right instanceof Unary) &&
-                !(right instanceof CategorizedFilter || right instanceof Has || right instanceof Sort)) {
-                if (exprCommaHelper instanceof CategorizedFilter) {
-                    if (right instanceof NegativeSingleValue) {
-                        let minus = right.minus;
-                        expr.addAttributeFilter(right._value.right, minus);
-                    }
-                    else if (right instanceof PositiveSingleValue) {
-                        this.error("Unexpected PositiveSingleValue: \n", right.begin);
-                    }
-                    else {
-                        expr.addAttributeFilter(right);
-                    }
+            if ((this.match(types.WORD, types.QUOTED_TEXT, types.COMPLEX_VALUE))) {
+                if (right instanceof PositiveSingleValue) {
+                    this.error("Unexpected PositiveSingleValue: \n", right.begin);
                 }
-                else if (right instanceof ValueRange || right instanceof NegativeSingleValue ||
-                    right instanceof PositiveSingleValue) {
+                if (exprCommaHelper instanceof CategorizedFilter) {
+                    expr.addAttributeFilter(right);
+                }
+                else if (right instanceof ValueRange) {
                     this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
                 }
                 else {
@@ -309,6 +305,9 @@ class Parser {
                         expr.addAttribute(right);
                     }
                     else if (exprCommaHelper instanceof Sort) {
+                        if (right instanceof NegativeSingleValue) {
+                            this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
+                        }
                         let order = this.tokens[this.current];
                         if (order.type === types.WORD) {
                             if (order.literal === 'asc' || order.literal === 'desc') {
@@ -340,15 +339,19 @@ class Parser {
             let operator = this.previous();
             if (this.tokens[this.current].type === '-') {
                 let minus = this.advance();
-                if (expr.lexeme === 'has' || expr.lexeme === 'sort by') {
+                if (expr.lexeme === 'sort by') {
                     this.error("'"+ expr.lexeme + "' can't have minus symbol\n", minus.begin);
                 }
                 let right_1 = this.unary();
-                if (this.match('..')) {
+                if (expr.lexeme === 'has') {
+                    expr = new Has(expr, operator, right_1, minus);
+                }
+                else if (this.match('..')) {
                     let right = new ValueRange(right_1, this.previous(), this.unary());
                     expr = new CategorizedFilter(new Attribute(expr), operator, right, minus);
-                } else {
-                    expr = new CategorizedFilter(new Attribute(expr), operator, right_1, minus);
+                }
+                else {
+                    expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
                 }
             }
             else if (this.tokens[this.current].type === '#') {
@@ -402,7 +405,7 @@ class Parser {
                     expr = new NegativeText(expr.operator, expr.right);
                 }
                 else {
-                    expr = new NegativeSingleValue(expr.operator, expr);
+                    expr = new NegativeSingleValue(expr.operator, expr.right);
                 }
             }
 
@@ -470,7 +473,8 @@ class Parser {
 
             while (this.match(types.WORD)) {
                 if (this.previous().lexeme.toUpperCase() in operators) {
-                    this.error("Operator '" + this.previous().lexeme.toUpperCase() + "' can not be key.\n", this.previous().begin);
+                    this.error("Operator '" + this.previous().lexeme.toUpperCase() + "' can not be key.\n",
+                        this.previous().begin);
                 }
                 attr.lexeme += ' ' + this.previous().lexeme;
                 attr.literal += ' ' + this.previous().literal;
@@ -479,7 +483,7 @@ class Parser {
 
             return attr;
         }
-        else if (this.match(types.WORD) || this.match('COMPLEX_VALUE')) {
+        else if (this.match(types.WORD, types.COMPLEX_VALUE)) {
             let attr = this.previous();
             if (attr.lexeme.toUpperCase() in operators) {
                 this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be value.\n", attr.begin);
@@ -496,8 +500,7 @@ class Parser {
         }
 
         else if (this.match('"')) {
-            let qt = new QuotedText(this.previous(), this.advance(), this.advance());
-            return qt;
+            return new QuotedText(this.previous(), this.advance(), this.advance());
         }
 
         if (this.match(operators.LEFT_PAREN)) {
@@ -505,14 +508,15 @@ class Parser {
             let expr = this.orExpression();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
-                this.error("SyntaxError: missing ')' after expression:\n", this.str.length);
+                this.error("Missing ')' after expression:\n", this.str.length);
             }
             let right = this.tokens[this.current - 1];
             return new Grouping(left, expr, right);
         }
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end);
+            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n",
+                this.tokens[this.current - 1].end);
         }
 
         else {
@@ -558,23 +562,11 @@ class Parser {
     }
 
     isAtEnd() {
-        if (arguments[0] === undefined)
-            return this.peek().type === operators.EOF;
-        else
-            return this.peekNext().type === operators.EOF;
-
+        return this.peek().type === operators.EOF;
     }
 
     peek() {
         return this.tokens[this.current];
-    }
-
-    peekNext() {
-        if (this.tokens[this.current + 1] !== undefined)
-            return this.tokens[this.current + 1];
-        else {
-            this.error("Expect SignExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.tokens[this.current - 1].end + 1);
-        }
     }
 
     previous() {
@@ -584,40 +576,15 @@ class Parser {
     error(message, n) {
         new errorEx(message, n, this.str);
     }
-
-    rightObj(type, expr, right) {
-        let rightObj;
-        if (type === 'CategorizedFilter') {
-            if (arguments[3] !== undefined) {
-                rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right, arguments[3]);
-            }
-            else {
-                rightObj = new CategorizedFilter(expr.attribute, new Token(':', ':', ':'), right);
-            }
-        }
-        else if (right instanceof PositiveSingleValue || right instanceof NegativeSingleValue || right instanceof ValueRange) {
-            this.error(type + " can not have " + right.type + " attribute:\n", right.begin);
-        }
-        else if (type === 'Has') {
-            rightObj = new Has(expr.key, new Token(':', ':', ':'), right);
-        }
-        else {
-            if (arguments[3] !== undefined)
-                rightObj = new Sort(expr.key, new Token(':', ':', ':'), right, arguments[3]);
-            else
-                rightObj = new Sort(expr.key, new Token(':', ':', ':'), right);
-        }
-        return rightObj;
-    }
 }
 
-// try {
-//     let t = new Parser('name: val1, -val2.. val3');
-//     let res = t.parse();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
+try {
+    let t = new Parser('name: val1, val2, val3');
+    let res = t.parse();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
 
 function traverse(obj, str) {
     let i;
@@ -698,9 +665,24 @@ function traverse(obj, str) {
                 }
             }
             else if (key === 'value') {
+                if ('operator' in obj[key][0]) {
+                    resString += '<span class="operator">' + str.substring(obj[key][0].operator.begin, obj[key][0].operator.end) + '</span>';
+                }
                 resString += '<span class="' + obj[key][0].type + '">' + str.substring(obj[key][0].begin, obj[key][0].end) + '</span>';
+                if ('order' in obj[key][0]) {
+                    resString += '<span class="order">' + str.substring(obj[key][0].order.begin, obj[key][0].order.end) + '</span>';
+                }
                 for (let cur = 1; cur < obj[key].length; cur++) {
-                    resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                    if ('operator' in obj[key][cur]) {
+                        resString += '<span class="operator">, ' + str.substring(obj[key][cur].operator.begin, obj[key][cur].operator.end) + '</span>';
+                        resString += '<span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                    }
+                    else {
+                        resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                        if ('order' in obj[key][cur]) {
+                            resString += '<span class="order">' + str.substring(obj[key][cur].order.begin, obj[key][cur].order.end) + '</span>';
+                        }
+                    }
                 }
             }
         }
@@ -708,15 +690,14 @@ function traverse(obj, str) {
     return resString;
 }
 
-let res1 = new NegativeSingleValue(
-    new Token('-', '-', '-', 0, 1),
-    new Unary(
-        new Token('-', '-', '-', 0, 1),
-        new Token('WORD', 'c', 'c', 1,2)
-    )
+let res1 = new Sort(
+    new Token('WORD', 'sort by', 'sort by', 0, 7),
+    new Token(':', ':', ':', 7, 8),
+    new Token('WORD', 'n', 'n', 9, 11),
+    new Token('WORD', 'asc', 'asc', 11, 14)
 );
 
-// let hRes = traverse(res1, '-c');
+// let hRes = traverse(res1, 'sort by: n asc');
 // document.getElementById('HQuery').innerHTML = hRes;
 
 
