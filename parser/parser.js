@@ -240,79 +240,22 @@ class Parser {
 
     orExpression() {
         let expr = this.andExpression();
-        let exprCommaHelper = expr;
 
-        while (this.matchOperator(operators.OR) || this.match(',')) {
-            if (this.previous().lexeme === operators.OR) {
-                let operator = this.previous();
-                operator.type = 'OPERATOR';
-                let right = this.andExpression();
-                if (right.type === types.WORD) {
-                    this.error("Incomplete query after:\n", right.begin - 1);
-                }
-                expr = new Binary(expr, operator, right);
+        while (this.matchOperator(operators.OR)) {
+            let operator = this.previous();
+            operator.type = 'OPERATOR';
+            let right = this.andExpression();
+            if (right.type === types.WORD) {
+                this.error("Incomplete query after:\n", right.begin - 1);
             }
-            else {
-                let right = this.andExpression('value');
-                if (right instanceof Binary) {
-                    this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
-                }
-                this.current--;
-                if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || this.match(types.COMPLEX_VALUE) || right instanceof Unary) &&
-                    !(right instanceof CategorizedFilter || right instanceof Has || right instanceof Sort)) {
-                    if (exprCommaHelper instanceof CategorizedFilter) {
-                        if (right instanceof NegativeSingleValue) {
-                            let minus = right.minus;
-                            expr.addAttributeFilter(right._value.right, minus);
-                        }
-                        else if (right instanceof PositiveSingleValue) {
-                            this.error("Unexpected PositiveSingleValue: \n", right.begin);
-                        }
-                        else {
-                            expr.addAttributeFilter(right);
-                        }
-                    }
-                    else if (right instanceof ValueRange || right instanceof NegativeSingleValue ||
-                        right instanceof PositiveSingleValue) {
-                        this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
-                    }
-                    else {
-                        right.type = 'Value';
-                        if (exprCommaHelper instanceof Has) {
-                            expr.addAttribute(right);
-                        }
-                        else if (exprCommaHelper instanceof Sort) {
-                            let order = this.tokens[this.current];
-                            if (order.type === types.WORD) {
-                                if (order.literal === 'asc' || order.literal === 'desc') {
-                                    expr.addValue(right, order);
-                                    this.current++;
-                                }
-                            }
-                            else {
-                                expr.addValue(right);
-                            }
-                        }
-                        else {
-                            this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
-                        }
-                    }
-                }
-                else {
-                    this.error("Unexpected value after comma:\n", right.begin);
-                }
-            }
+            expr = new Binary(expr, operator, right);
         }
 
         return expr;
     }
 
     andExpression() {
-        let expr;
-        if (arguments[0] !== undefined)
-            expr = this.andOperand(arguments[0]);
-        else
-            expr = this.andOperand();
+        let expr = this.andOperand();
 
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
@@ -332,11 +275,60 @@ class Parser {
     }
 
     andOperand() {
-        let expr;
-        if (arguments[0] !== undefined)
-            expr = this.item(arguments[0]);
-        else
-            expr = this.item();
+        let expr = this.item();
+
+        let exprCommaHelper = expr;
+
+        while (this.match(',')) {
+            let right = this.item('value');
+            if (right instanceof Binary) {
+                this.error("Missing parentheses for OrExpression before 'and' operator:\n", right.operator.begin - 1);
+            }
+            this.current--;
+            if ((this.match(types.WORD) || this.match(types.QUOTED_TEXT) || this.match(types.COMPLEX_VALUE) || right instanceof Unary) &&
+                !(right instanceof CategorizedFilter || right instanceof Has || right instanceof Sort)) {
+                if (exprCommaHelper instanceof CategorizedFilter) {
+                    if (right instanceof NegativeSingleValue) {
+                        let minus = right.minus;
+                        expr.addAttributeFilter(right._value.right, minus);
+                    }
+                    else if (right instanceof PositiveSingleValue) {
+                        this.error("Unexpected PositiveSingleValue: \n", right.begin);
+                    }
+                    else {
+                        expr.addAttributeFilter(right);
+                    }
+                }
+                else if (right instanceof ValueRange || right instanceof NegativeSingleValue ||
+                    right instanceof PositiveSingleValue) {
+                    this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
+                }
+                else {
+                    right.type = 'Value';
+                    if (exprCommaHelper instanceof Has) {
+                        expr.addAttribute(right);
+                    }
+                    else if (exprCommaHelper instanceof Sort) {
+                        let order = this.tokens[this.current];
+                        if (order.type === types.WORD) {
+                            if (order.literal === 'asc' || order.literal === 'desc') {
+                                expr.addValue(right, order);
+                                this.current++;
+                            }
+                        }
+                        else {
+                            expr.addValue(right);
+                        }
+                    }
+                    else {
+                        this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
+                    }
+                }
+            }
+            else {
+                this.error("Unexpected value after comma:\n", right.begin);
+            }
+        }
 
         return expr;
     }
@@ -620,7 +612,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('a:v');
+    let t = new Parser('name: val1, val2, val3');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -719,20 +711,20 @@ let res1 = new NegativeSingleValue(
 // document.getElementById('HQuery').innerHTML = hRes;
 
 
-document.getElementById('inQuery').oninput = function () {
-    try {
-        let p = new Parser(document.getElementById('inQuery').value);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-        let hRes = traverse(res, document.getElementById('inQuery').value);
-        document.getElementById('HQuery').innerHTML = hRes;
-    } catch (e) {
-        if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
-        } else {
-            document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
-        }
-    }
-};
+// document.getElementById('inQuery').oninput = function () {
+//     try {
+//         let p = new Parser(document.getElementById('inQuery').value);
+//         let res = p.parse();
+//         document.getElementById('result').value = JSON.stringify(res, null, 4);
+//         let hRes = traverse(res, document.getElementById('inQuery').value);
+//         document.getElementById('HQuery').innerHTML = hRes;
+//     } catch (e) {
+//         if (e instanceof errorEx) {
+//             document.getElementById('result').value = e;
+//         } else {
+//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+//         }
+//     }
+// };
 
 module.exports = Parser;
