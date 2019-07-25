@@ -1,6 +1,5 @@
 const operators = require('./operators');
 const errorEx = require('./syntaxException');
-const types = require('./types');
 const Token = require('./token');
 
 class Lexer {
@@ -26,8 +25,7 @@ class Lexer {
         switch (c) {
             case '(': {
                 if (this.current - 1 > 0) {
-                    if (this.tokens[this.tokens.length - 1].type !== types.TUPLE_NAME && this.str[this.current - 2]
-                        !== ' ' && this.str[this.current - 1] !== '(') {
+                    if (this.str[this.current - 2] !== ' ' && this.str[this.current - 1] !== '(') {
                         this.error("Unexpected token:\n", this.current);
                     }
                 }
@@ -39,7 +37,7 @@ class Lexer {
                 this.addToken('COMPLEX_VALUE', cur, this.start, this.current);
                 break;
             }
-            case '\-': this.addToken('\-', '\-', this.start, this.current); break;
+            case '-': this.addToken('-', '-', this.start, this.current); break;
             case '#': this.addToken('#', '#', this.start, this.current); break;
             case '"': {
                 this.addToken('"', '"', this.start, this.current);
@@ -150,8 +148,22 @@ class Lexer {
             this.advance();
         }
 
+        let curWord = this.str.substring(this.start, this.current);
 
-        this.addToken('WORD', this.str.substring(this.start, this.current).replace(/ /g, ''), this.start, this.current);
+        if (curWord.indexOf('..') !== -1) {
+            let pos = this.start + curWord.indexOf('..');
+            this.addToken('WORD', this.str.substring(this.start, pos)
+                .replace(/ /g, ''), this.start, pos);
+            this.addToken('..', '..', pos, pos + 2);
+            if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
+                this.addToken('WORD', this.str.substring(pos + 2, this.current)
+                    .replace(/ /g, ''), pos + 2, this.current);
+            }
+        }
+        else {
+            this.addToken('WORD', this.str.substring(this.start, this.current)
+                .replace(/ /g, ''), this.start, this.current);
+        }
     }
 
     isAlphaNumeric(c) {
@@ -166,7 +178,7 @@ class Lexer {
 module.exports = Lexer;
 
 // try {
-//     let t = new Lexer(' #bug by: yarko -minor -normal');
+//     let t = new Lexer('name: val1, val2..val3');
 //     let res = t.scanTokens();
 //     console.log(res);
 // } catch (e) {

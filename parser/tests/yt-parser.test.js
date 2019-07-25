@@ -732,6 +732,54 @@ class Sort extends TermItem {
                 )
             )},
 
+    {input: 'test: t or t: g, m', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 5),
+                    new Token('WORD', 't', 't', 6, 8),
+                ),
+                new Token('OPERATOR', 'or', 'or', 8, 11),
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 't', 't', 11, 12)
+                    ),
+                    new Token(':', ':', ':', 12, 13),
+                    [
+                        new Token('WORD', 'g', 'g', 14, 15),
+                        new Token('WORD', 'm', 'm', 17, 18)
+                    ]
+                )
+            )},
+
+    {input: 'test: t..m', output:
+            new CategorizedFilter(
+                new Attribute(
+                    new Token('WORD', 'test', 'test', 0, 4)
+                ),
+                new Token(':', ':', ':', 4, 5),
+                new ValueRange(
+                    new Token('WORD', 't', 't', 6, 7),
+                    new Token('..', '..', '..', 7, 9),
+                    new Token('WORD', 'm', 'm', 9, 10)
+                )
+            )},
+
+    {input: 'test: t.. m', output:
+            new CategorizedFilter(
+                new Attribute(
+                    new Token('WORD', 'test', 'test', 0, 4)
+                ),
+                new Token(':', ':', ':', 4, 5),
+                new ValueRange(
+                    new Token('WORD', 't', 't', 6, 7),
+                    new Token('..', '..', '..', 7, 9),
+                    new Token('WORD', 'm', 'm', 10, 11)
+                )
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);

@@ -338,7 +338,7 @@ class Parser {
 
         if (this.match(operators.COLON)) {
             let operator = this.previous();
-            if (this.tokens[this.current].type === '\-') {
+            if (this.tokens[this.current].type === '-') {
                 let minus = this.advance();
                 if (expr.lexeme === 'has' || expr.lexeme === 'sort by') {
                     this.error("'"+ expr.lexeme + "' can't have minus symbol\n", minus.begin);
@@ -440,7 +440,7 @@ class Parser {
     }
 
     unary() {
-        if (this.match('#') || this.match('\-')) {
+        if (this.match('#') || this.match('-')) {
             let operator = this.previous();
             if (arguments[0] === 'key') {
                 let right = this.primary();
@@ -611,13 +611,13 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('name: val1, val2, val3');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Parser('name: val1, -val2.. val3');
+//     let res = t.parse();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
 function traverse(obj, str) {
     let i;
@@ -683,9 +683,18 @@ function traverse(obj, str) {
                 }
             }
             else if (key === 'attributeFilter') {
+                if ('operator' in obj[key][0]) {
+                    resString += '<span class="operator">' + str.substring(obj[key][0].operator.begin, obj[key][0].operator.end) + '</span>';
+                }
                 resString += '<span class="' + obj[key][0].type + '">' + str.substring(obj[key][0].begin, obj[key][0].end) + '</span>';
                 for (let cur = 1; cur < obj[key].length; cur++) {
-                    resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                    if ('operator' in obj[key][cur]) {
+                        resString += '<span class="operator">, ' + str.substring(obj[key][cur].operator.begin, obj[key][cur].operator.end) + '</span>';
+                        resString += '<span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                    }
+                    else {
+                        resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
+                    }
                 }
             }
             else if (key === 'value') {
