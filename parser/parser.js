@@ -1,3 +1,6 @@
+// TO DO:
+// refactor PositiveSingleValue and other
+
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -60,12 +63,10 @@ class NegativeText extends TermItem {
 
 class PositiveSingleValue extends TermItem {
     constructor(lat, value) {
-        super('PositiveSingleValue', lat.begin, value.right.end);
+        super('PositiveSingleValue', lat.begin, value.end);
         this.operator = lat.type;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = lat.begin;
-        this.end = value.right.end;
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
     }
 }
 
@@ -92,7 +93,6 @@ class ValueRange {
 
 class AttributeFilter {
     constructor(value) {
-        // if (arguments[1] !== undefined) this.operator = arguments[1];
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
@@ -397,7 +397,7 @@ class Parser {
             }
 
             else if (expr.operator.type === '#') {
-                expr = new PositiveSingleValue(expr.operator, expr);
+                expr = new PositiveSingleValue(expr.operator, expr.right);
             }
 
             else if (expr.operator.type === '-') {
@@ -607,7 +607,7 @@ function traverse(obj, str) {
                         break;
                     }
                     case 'NegativeSingleValue': {
-                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.minus.begin, obj.end) + '</span>';
                         break;
                     }
                     case 'QuotedText': {

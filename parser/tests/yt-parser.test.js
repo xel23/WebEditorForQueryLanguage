@@ -72,12 +72,10 @@ class NegativeText extends TermItem {
 
 class PositiveSingleValue extends TermItem {
     constructor(lat, value) {
-        super('PositiveSingleValue', lat.begin, value.right.end);
+        super('PositiveSingleValue', lat.begin, value.end);
         this.operator = lat.type;
-        this.lexeme = value.right.lexeme;
-        this.literal = value.right.literal;
-        this.begin = lat.begin;
-        this.end = value.right.end;
+        this.lexeme = value.lexeme;
+        this.literal = value.literal;
     }
 }
 
@@ -104,7 +102,6 @@ class ValueRange {
 
 class AttributeFilter {
     constructor(value) {
-        // if (arguments[1] !== undefined) this.operator = arguments[1];
         if (value instanceof ValueRange) {
             this.type = 'ValueRange';
             this.left_lexeme = value.leftVal.lexeme;
@@ -463,20 +460,14 @@ class Sort extends TermItem {
     {input: '#c', output:
             new PositiveSingleValue(
                 new Token('#', '#', '#', 0, 1),
-                new Unary(
-                    new Token('#', '#', '#', 0, 1),
-                    new Token('WORD', 'c', 'c', 1, 2)
-                )
+                new Token('WORD', 'c', 'c', 1, 2)
             )},
 
     {input: '#c -n', output:
             new Binary(
                 new PositiveSingleValue(
                     new Token('#', '#', '#', 0, 1),
-                    new Unary(
-                        new Token('#', '#', '#', 0, 1),
-                        new Token('WORD', 'c', 'c', 1, 3)
-                    )
+                    new Token('WORD', 'c', 'c', 1, 3)
                 ),
                 new Token('OPERATOR', 'and', 'and'),
                 new NegativeSingleValue(
