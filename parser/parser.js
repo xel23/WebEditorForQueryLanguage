@@ -1,6 +1,3 @@
-// TO DO:
-// refactor PositiveSingleValue and other
-
 const lexer = require('./lexer');
 const operators = require('./operators');
 const types = require('./types');
@@ -74,9 +71,23 @@ class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
         super('NegativeSingleValue', value.begin, value.end);
         this.minus = minus;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this._value = value;
+        if (value instanceof ValueRange) {
+            this.left_lexeme = value.leftVal.lexeme;
+            this.left_lexeme_begin = value.leftVal.begin;
+            this.left_lexeme_end = value.leftVal.end;
+            this.left_literal = value.leftVal.literal;
+            this.right_lexeme = value.rightVal.lexeme;
+            this.right_lexeme_begin = value.rightVal.begin;
+            this.right_lexeme_end = value.rightVal.end;
+            this.right_literal = value.rightVal.literal;
+            this.vr_operator = value.operator;
+            this.begin = value.leftVal.begin;
+            this.end = value.rightVal.end;
+        }
+        else {
+            this.lexeme = value.lexeme;
+            this.literal = value.literal;
+        }
     }
 }
 
@@ -110,10 +121,25 @@ class AttributeFilter {
         else if (value instanceof NegativeSingleValue) {
             this.type = value.type;
             this.operator = value.minus;
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-            this.begin = value.begin;
-            this.end = value.end;
+            if (value.left_lexeme !== undefined) {
+                this.left_lexeme = value.left_lexeme;
+                this.left_lexeme_begin = value.left_lexeme_begin;
+                this.left_lexeme_end = value.left_lexeme_end;
+                this.left_literal = value.left_literal;
+                this.right_lexeme = value.right_lexeme;
+                this.right_lexeme_begin = value.right_lexeme_begin;
+                this.right_lexeme_end = value.right_lexeme_end;
+                this.right_literal = value.right_literal;
+                this.vr_operator = value.vr_operator;
+                this.begin = value.begin;
+                this.end = value.end;
+            }
+            else {
+                this.lexeme = value.lexeme;
+                this.literal = value.literal;
+                this.begin = value.begin;
+                this.end = value.end;
+            }
         }
         else {
             this.type = value.type === 'WORD' ? 'Value' : value.type;
@@ -348,7 +374,7 @@ class Parser {
                 }
                 else if (this.match('..')) {
                     let right = new ValueRange(right_1, this.previous(), this.unary());
-                    expr = new CategorizedFilter(new Attribute(expr), operator, right, minus);
+                    expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
                 }
                 else {
                     expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
@@ -368,7 +394,7 @@ class Parser {
                         expr = new CategorizedFilter(new Attribute(expr), operator, right);
                     }
                 } else {
-                    right_1.type = 'Value';
+                    right_1.type = right_1.type !== 'QuotedText' ? 'Value' : right_1.type;
                     if (expr.lexeme === 'has') {
                         expr = new Has(expr, operator, right_1);
                     }
@@ -415,11 +441,6 @@ class Parser {
         }
 
         else if ('expr' in expr) {
-            return expr;
-        }
-
-        else if (this.match(',')) {
-            this.current--;
             return expr;
         }
 
@@ -579,7 +600,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('name: val1, val2, val3');
+    let t = new Parser('a: "ddf"');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -701,20 +722,40 @@ let res1 = new Sort(
 // document.getElementById('HQuery').innerHTML = hRes;
 
 
-// document.getElementById('inQuery').oninput = function () {
+
+// let field = document.getElementById('inQuery');
+
+// function listener () {
 //     try {
-//         let p = new Parser(document.getElementById('inQuery').value);
+//         // let node = document.activeElement;
+//         // console.log(node);
+//         // let offset = window.getSelection().anchorOffset;
+//         // console.log('anchor: ', offset);
+//         // offset = window.getSelection().o;
+//         // console.log('focus: ', offset);
+//         let p = new Parser(field.innerText);
 //         let res = p.parse();
 //         document.getElementById('result').value = JSON.stringify(res, null, 4);
-//         let hRes = traverse(res, document.getElementById('inQuery').value);
-//         document.getElementById('HQuery').innerHTML = hRes;
+//         let hRes = traverse(res, field.innerText);
+//         field.innerHTML = hRes;
+//
+//         // let range = document.createRange();
+//         // let sel = window.getSelection();
+//         // sel.removeAllRanges();
+//         // sel.addRange(range);
+//         // field.focus();
 //     } catch (e) {
 //         if (e instanceof errorEx) {
 //             document.getElementById('result').value = e;
 //         } else {
-//             document.getElementById('result').value = 'Text:' + document.getElementById('query').value;
+//             // document.getElementById('result').value = 'Text:' + field.innerText;
+//             document.getElementById('result').value = e;
 //         }
 //     }
-// };
+// }
+
+// if (field.addEventListener) {
+//     field.addEventListener("input", listener, false);
+// }
 
 module.exports = Parser;

@@ -83,9 +83,23 @@ class NegativeSingleValue extends TermItem {
     constructor(minus, value) {
         super('NegativeSingleValue', value.begin, value.end);
         this.minus = minus;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this._value = value;
+        if (value instanceof ValueRange) {
+            this.left_lexeme = value.leftVal.lexeme;
+            this.left_lexeme_begin = value.leftVal.begin;
+            this.left_lexeme_end = value.leftVal.end;
+            this.left_literal = value.leftVal.literal;
+            this.right_lexeme = value.rightVal.lexeme;
+            this.right_lexeme_begin = value.rightVal.begin;
+            this.right_lexeme_end = value.rightVal.end;
+            this.right_literal = value.rightVal.literal;
+            this.vr_operator = value.operator;
+            this.begin = value.leftVal.begin;
+            this.end = value.rightVal.end;
+        }
+        else {
+            this.lexeme = value.lexeme;
+            this.literal = value.literal;
+        }
     }
 }
 
@@ -119,10 +133,25 @@ class AttributeFilter {
         else if (value instanceof NegativeSingleValue) {
             this.type = value.type;
             this.operator = value.minus;
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-            this.begin = value.begin;
-            this.end = value.end;
+            if (value.left_lexeme !== undefined) {
+                this.left_lexeme = value.left_lexeme;
+                this.left_lexeme_begin = value.left_lexeme_begin;
+                this.left_lexeme_end = value.left_lexeme_end;
+                this.left_literal = value.left_literal;
+                this.right_lexeme = value.right_lexeme;
+                this.right_lexeme_begin = value.right_lexeme_begin;
+                this.right_lexeme_end = value.right_lexeme_end;
+                this.right_literal = value.right_literal;
+                this.vr_operator = value.vr_operator;
+                this.begin = value.begin;
+                this.end = value.end;
+            }
+            else {
+                this.lexeme = value.lexeme;
+                this.literal = value.literal;
+                this.begin = value.begin;
+                this.end = value.end;
+            }
         }
         else {
             this.type = value.type === 'WORD' ? 'Value' : value.type;
@@ -319,12 +348,14 @@ class Sort extends TermItem {
                     new Token('WORD', 'a', 'a', 0, 1)
                 ),
                 new Token(':', ':', ':', 1, 2),
-                new ValueRange(
-                    new Token('WORD', 'bb', 'bb', 4, 7),
-                    new Token('..', '..', '..', 7, 9),
-                    new Token('WORD', 'cc', 'cc', 10, 12),
-                ),
-                new Token('-', '-','-', 3, 4)
+                new NegativeSingleValue(
+                    new Token('-', '-','-', 3, 4),
+                    new ValueRange(
+                        new Token('WORD', 'bb', 'bb', 4, 7),
+                        new Token('..', '..', '..', 7, 9),
+                        new Token('WORD', 'cc', 'cc', 10, 12),
+                    )
+                )
             )},
 
     {input: 'has: field', output:
@@ -341,12 +372,14 @@ class Sort extends TermItem {
                         new Token('WORD', 'a', 'a', 0, 1)
                     ),
                     new Token(':', ':', ':', 1, 2),
-                    new ValueRange(
-                        new Token('WORD', 'bb', 'bb', 4, 7),
-                        new Token('..', '..', '..', 7, 9),
-                        new Token('WORD', 'cc', 'cc', 10, 13),
-                    ),
-                    new Token('-', '-','-', 3, 4)
+                    new NegativeSingleValue(
+                        new Token('-', '-','-', 3, 4),
+                        new ValueRange(
+                            new Token('WORD', 'bb', 'bb', 4, 7),
+                            new Token('..', '..', '..', 7, 9),
+                            new Token('WORD', 'cc', 'cc', 10, 13),
+                        )
+                    )
                 ),
                 new Token('OPERATOR', 'and', 'and'),
                 new Has(

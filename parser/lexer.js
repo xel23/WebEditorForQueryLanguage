@@ -25,6 +25,9 @@ class Lexer {
         switch (c) {
             case '(': {
                 if (this.current - 1 > 0) {
+                    if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
+                        this.error("Unexpected token '" + this.tokens[this.tokens.length - 1].type +"':\n", this.tokens[this.tokens.length - 1].begin);
+                    }
                     if (this.str[this.current - 2] !== ' ' && this.str[this.current - 1] !== '(') {
                         this.error("Unexpected token:\n", this.current);
                     }
@@ -37,8 +40,22 @@ class Lexer {
                 this.addToken('COMPLEX_VALUE', cur, this.start, this.current);
                 break;
             }
-            case '-': this.addToken('-', '-', this.start, this.current); break;
-            case '#': this.addToken('#', '#', this.start, this.current); break;
+            case '-':  {
+                if (this.current - 1 > 0) {
+                    if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
+                        this.error("Unexpected token '" + this.str[this.start] + "':\n", this.start);
+                    }
+                }
+                this.addToken('-', '-', this.start, this.current);
+            } break;
+            case '#': {
+                if (this.current - 1 > 0) {
+                    if (this.tokens[this.tokens.length - 1].type === '#' || this.tokens[this.tokens.length - 1].type === '-') {
+                        this.error("Unexpected token '" + this.str[this.start] +"':\n", this.start);
+                    }
+                }
+                this.addToken('#', '#', this.start, this.current);
+            } break;
             case '"': {
                 this.addToken('"', '"', this.start, this.current);
                 let cur =  this.stringQuote();
@@ -62,13 +79,12 @@ class Lexer {
             case '\n':
             case '\r': break;
             default: {
-                // if (!this.isAtEnd()) {
-                    if (this.isAlphaNumeric(c)) {
-                        this.identifier();
-                    }
-                    else {
-                        this.error("Unexpected token:\n", this.current - 1);
-                    }
+                if (this.isAlphaNumeric(c)) {
+                    this.identifier();
+                }
+                else {
+                    this.error("Unexpected token:\n", this.current - 1);
+                }
             }
         }
     }
@@ -176,11 +192,3 @@ class Lexer {
 }
 
 module.exports = Lexer;
-
-// try {
-//     let t = new Lexer('name: val1, val2..val3');
-//     let res = t.scanTokens();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
