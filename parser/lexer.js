@@ -77,7 +77,10 @@ class Lexer {
             case ' ':
             case '\t':
             case '\n':
-            case '\r': break;
+            case '\r': {
+                this.tokens[this.tokens.length - 1].end++;
+                break;
+            }
             default: {
                 if (this.isAlphaNumeric(c)) {
                     this.identifier();
@@ -170,7 +173,9 @@ class Lexer {
             let pos = this.start + curWord.indexOf('..');
             this.addToken('WORD', this.str.substring(this.start, pos)
                 .replace(/ /g, ''), this.start, pos);
-            this.addToken('..', '..', pos, pos + 2);
+            let i = 0;
+            while (this.str[pos + 2 + i] === ' ') i++;
+            this.addToken('..', '..', pos, pos + 2 + i);
             if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
                 this.addToken('WORD', this.str.substring(pos + 2, this.current)
                     .replace(/ /g, ''), pos + 2, this.current);
@@ -189,6 +194,14 @@ class Lexer {
     error(message, n) {
         new errorEx(message, n, this.str);
     }
+}
+
+try {
+    let t = new Lexer('test: t.. m');
+    let res = t.scanTokens();
+    console.log(res);
+} catch(e) {
+    console.log(e);
 }
 
 module.exports = Lexer;

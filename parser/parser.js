@@ -181,7 +181,8 @@ class Has extends TermItem {
         }
     }
 
-    addAttribute(token) {
+    addAttribute(token, comma) {
+        this.value.push(comma);
         this.value.push(new Attribute(token));
         this.end = token.end;
     }
@@ -197,9 +198,10 @@ class CategorizedFilter extends TermItem {
         this.attributeFilter.push(new AttributeFilter(attributeFilter));
     }
 
-    addAttributeFilter(token) {
+    addAttributeFilter(token, comma) {
         this.end = token instanceof ValueRange ? token.rightVal.end : token.end;
 
+        this.attributeFilter.push(comma);
         this.attributeFilter.push(new AttributeFilter(token));
     }
 }
@@ -233,10 +235,11 @@ class Sort extends TermItem {
         }
     }
 
-    addValue(token) {
-        if (arguments[1] !== undefined) {
-            this.value.push(new SortAttribute(token, arguments[1]));
-            this.end = arguments[1].end;
+    addValue(token, comma) {
+        this.value.push(comma);
+        if (arguments[2] !== undefined) {
+            this.value.push(new SortAttribute(token, arguments[2]));
+            this.end = arguments[2].end;
         }
         else {
             this.value.push(new SortAttribute(token));
@@ -313,6 +316,7 @@ class Parser {
         let exprCommaHelper = expr;
 
         while (this.match(',')) {
+            let comma = this.previous();
             let right = this.item('value');
             this.current--;
             if ((this.match(types.WORD, types.QUOTED_TEXT, types.COMPLEX_VALUE))) {
@@ -320,7 +324,7 @@ class Parser {
                     this.error("Unexpected PositiveSingleValue: \n", right.begin);
                 }
                 if (exprCommaHelper instanceof CategorizedFilter) {
-                    expr.addAttributeFilter(right);
+                    expr.addAttributeFilter(right, comma);
                 }
                 else if (right instanceof ValueRange) {
                     this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
@@ -328,7 +332,7 @@ class Parser {
                 else {
                     right.type = 'Value';
                     if (exprCommaHelper instanceof Has) {
-                        expr.addAttribute(right);
+                        expr.addAttribute(right, comma);
                     }
                     else if (exprCommaHelper instanceof Sort) {
                         if (right instanceof NegativeSingleValue) {
@@ -337,12 +341,12 @@ class Parser {
                         let order = this.tokens[this.current];
                         if (order.type === types.WORD) {
                             if (order.literal === 'asc' || order.literal === 'desc') {
-                                expr.addValue(right, order);
+                                expr.addValue(right, comma, order);
                                 this.current++;
                             }
                         }
                         else {
-                            expr.addValue(right);
+                            expr.addValue(right, comma);
                         }
                     }
                     else {
@@ -600,7 +604,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('a: "ddf"');
+    let t = new Parser('sort by: v asc, g');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -632,11 +636,11 @@ function traverse(obj, str) {
                         break;
                     }
                     case 'QuotedText': {
-                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + ' </span>';
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
                         break;
                     }
                     case 'NegativeText': {
-                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + ' </span>';
+                        resString += '<span class="' + obj.type + '">' + str.substring(obj.begin, obj.end) + '</span>';
                         break;
                     }
                     case 'key': {
@@ -660,10 +664,10 @@ function traverse(obj, str) {
                     case '-':
                     case '#': {
                         if ('begin' in obj) {
-                            resString += '<span class="operator">' + str.substring(obj.begin, obj.end) + ' </span>';
+                            resString += '<span class="operator">' + str.substring(obj.begin, obj.end) + '</span>';
                         }
                         else if (obj.lexeme === 'or') {
-                            resString += '<span class="operator">, </span>';
+                            resString += '<span class="operator">' + str.substring(obj.begin, obj.end) + '</span>';
                         }
                         break;
                     }
@@ -724,26 +728,21 @@ let res1 = new Sort(
 
 
 // let field = document.getElementById('inQuery');
-
+//
 // function listener () {
 //     try {
-//         // let node = document.activeElement;
-//         // console.log(node);
-//         // let offset = window.getSelection().anchorOffset;
-//         // console.log('anchor: ', offset);
-//         // offset = window.getSelection().o;
-//         // console.log('focus: ', offset);
+//         let node = window.getSelection().anchorNode;
+//         let offset = window.getSelection().anchorOffset;
+//         let pos = getCursor(field, node, offset);
+//         console.log(pos, offset);
+//
 //         let p = new Parser(field.innerText);
 //         let res = p.parse();
 //         document.getElementById('result').value = JSON.stringify(res, null, 4);
 //         let hRes = traverse(res, field.innerText);
 //         field.innerHTML = hRes;
 //
-//         // let range = document.createRange();
-//         // let sel = window.getSelection();
-//         // sel.removeAllRanges();
-//         // sel.addRange(range);
-//         // field.focus();
+//         setCursor(field, pos);
 //     } catch (e) {
 //         if (e instanceof errorEx) {
 //             document.getElementById('result').value = e;
@@ -753,9 +752,49 @@ let res1 = new Sort(
 //         }
 //     }
 // }
-
+//
 // if (field.addEventListener) {
 //     field.addEventListener("input", listener, false);
+// }
+//
+// function getCursor(node, anchorNode, offset) {
+//
+//     let pos = 0;
+//     // debugger;
+//     if (anchorNode.parentNode === node) {
+//         return offset;
+//     }
+//     else {
+//         let curNode = anchorNode;
+//         while (curNode !== node) {
+//             while (curNode.previousSibling !== null) {
+//                 pos += curNode.previousSibling.textContent.length;
+//                 curNode = curNode.previousSibling;
+//             }
+//             curNode = curNode.parentNode;
+//         }
+//         pos += offset;
+//     }
+//     return pos;
+// }
+//
+// function setCursor(node, pos) {
+//     let curNode = node;
+//     let curPos = 0, i = 0;
+//     while (curPos < pos) {
+//         if (curNode.childNodes[i] !== null) {
+//             curPos += curNode.childNodes[i].textContent.length;
+//             i++;
+//         }
+//         else {
+//             curNode = curNode.childNodes[i];
+//             if (curNode.childNodes.length === 0)  {
+//                 break;
+//             }
+//         }
+//     }
+//
+//     document.getSelection().collapse(curNode, pos - curPos + 1);
 // }
 
 module.exports = Parser;
