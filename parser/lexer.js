@@ -1,5 +1,5 @@
-const operators = require('./operators');
-const errorEx = require('./syntaxException');
+const operators = require('./const/operators');
+const errorEx = require('./exceptions/syntaxException');
 const Token = require('./token');
 
 class Lexer {
@@ -192,13 +192,5 @@ class Lexer {
         new errorEx(message, n, this.str);
     }
 }
-
-// try {
-//     let t = new Lexer('test: t.. m');
-//     let res = t.scanTokens();
-//     console.log(res);
-// } catch(e) {
-//     console.log(e);
-// }
 
 module.exports = Lexer;

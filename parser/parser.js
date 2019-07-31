@@ -1,34 +1,11 @@
 const lexer = require('./lexer');
-const operators = require('./operators');
-const types = require('./types');
-const errorEx = require('./syntaxException');
+const operators = require('./const/operators');
+const types = require('./const/types');
+const errorEx = require('./exceptions/syntaxException');
 const Token = require('./token');
-
-class Binary {
-    constructor(left, operator, right) {
-        this.type = 'Binary';
-        this.left = left;
-        this.operator = operator;
-        this.right = right;
-    }
-}
-
-class Unary {
-    constructor(operator, right) {
-        this.type = 'Unary';
-        this.operator = operator;
-        this.right = right;
-    }
-}
-
-class Grouping {
-    constructor(left, expr, right) {
-        this.type = 'Grouping';
-        this.left = left;
-        this.expr = expr;
-        this.right = right;
-    }
-}
+const Binary = require('./general/Binary');
+const Unary = require('./general/Unary');
+const Grouping = require('./general/Grouping');
 
 class TermItem {
     constructor (type, being, end) {
@@ -603,195 +580,12 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('#   maf');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
-
-// Highlighter --->
-function wrapper(text, type) {
-    return '<span class="' + type + '">' + text +'</span>';
-}
-
-function traverse(obj, str) {
-    let i;
-    let resString = "";
-    for (let key in obj) {
-        if (obj[key] instanceof Object && !(obj[key] instanceof Unary) && key !== 'minus' &&
-            !(obj[key] instanceof Grouping) && key !== 'attributeFilter' && key !== 'value') {
-            resString += traverse(obj[key], str);
-        }
-        else if (obj[key] instanceof Grouping) {
-            resString +=  wrapper(str.substring(obj[key].left.begin, obj[key].left.end), 'Parentheses');
-            resString += traverse(obj[key], str);
-            resString +=  wrapper(str.substring(obj[key].right.begin, obj[key].right.end), 'Parentheses');
-        }
-        else {
-            if (key === 'type') {
-                switch (obj.type) {
-                    case 'QuotedText':
-                    case 'NegativeText':
-                    case 'key':
-                    case 'Attribute':
-                    case 'Value':
-                    case 'ValueRange':
-                    case 'PositiveSingleValue': {
-                        resString += wrapper(str.substring(obj.begin, obj.end), obj.type);
-                        break;
-                    }
-                    case 'NegativeSingleValue': {
-                        resString += wrapper(str.substring(obj.minus.begin, obj.end), obj.type);
-                        break;
-                    }
-                    case 'OPERATOR':
-                    case ':':
-                    case '-':
-                    case '#': {
-                        if ('begin' in obj) {
-                            resString += wrapper(str.substring(obj.begin, obj.end), 'operator');
-                        }
-                        else if (obj.lexeme === 'or') {
-                            resString += wrapper(str.substring(obj.begin, obj.end), 'operator');
-                        }
-                        break;
-                    }
-                    default: break;
-                }
-            }
-            else if (key === 'attributeFilter' || key === 'value') {
-                if ('operator' in obj[key][0]) {
-                    resString += wrapper(str.substring(obj[key][0].operator.begin, obj[key][0].operator.end), 'operator');
-                }
-                resString += wrapper(str.substring(obj[key][0].begin, obj[key][0].end), obj[key][0].type);
-
-                if ('order' in obj[key][0]) {
-                    resString += wrapper(str.substring(obj[key][0].order.begin, obj[key][0].order.end), 'order');
-                }
-
-                for (let cur = 1; cur < obj[key].length; cur++) {
-                    resString += wrapper(str.substring(obj[key][cur].begin, obj[key][cur].end), 'operator');
-                    cur++;
-                    if ('operator' in obj[key][cur]) {
-                        resString += wrapper(str.substring(obj[key][cur].operator.begin, obj[key][cur].operator.end), 'operator');
-                    }
-                    resString += wrapper(str.substring(obj[key][cur].begin, obj[key][cur].end), obj[key][cur].type);
-
-                    if ('order' in obj[key][cur]) {
-                        resString += wrapper(str.substring(obj[key][cur].order.begin, obj[key][cur].order.end), 'order');
-                    }
-                }
-            }
-            // else if (key === 'value') {
-            //     if ('operator' in obj[key][0]) {
-            //         resString += wrapper(str.substring(obj[key][0].operator.begin, obj[key][0].operator.end), 'operator');
-            //     }
-            //     resString += wrapper(str.substring(obj[key][0].begin, obj[key][0].end), obj[key][0].type);
-            //
-            //     if ('order' in obj[key][0]) {
-            //         resString += '<span class="order">' + str.substring(obj[key][0].order.begin, obj[key][0].order.end) + '</span>';
-            //     }
-            //     for (let cur = 1; cur < obj[key].length; cur++) {
-            //         if ('operator' in obj[key][cur]) {
-            //             resString += '<span class="operator">, ' + str.substring(obj[key][cur].operator.begin, obj[key][cur].operator.end) + '</span>';
-            //             resString += '<span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
-            //         }
-            //         else {
-            //             resString += '<span class="operator">, </span><span class="' + obj[key][cur].type + '">' + str.substring(obj[key][cur].begin, obj[key][cur].end) + '</span>';
-            //             if ('order' in obj[key][cur]) {
-            //                 resString += '<span class="order">' + str.substring(obj[key][cur].order.begin, obj[key][cur].order.end) + '</span>';
-            //             }
-            //         }
-            //     }
-            // }
-        }
-    }
-    return resString;
-}
-
-let res1 = new Sort(
-    new Token('WORD', 'sort by', 'sort by', 0, 7),
-    new Token(':', ':', ':', 7, 8),
-    new Token('WORD', 'n', 'n', 9, 11),
-    new Token('WORD', 'asc', 'asc', 11, 14)
-);
-
-// let hRes = traverse(res1, 'sort by: n asc');
-// document.getElementById('HQuery').innerHTML = hRes;
-
-// <---
-
-let field = document.getElementById('inQuery');
-
-function listener () {
-    try {
-        let node = window.getSelection().anchorNode;
-        let offset = window.getSelection().anchorOffset;
-        let pos = getCursor(field, node, offset);
-        console.log(pos, offset);
-
-        let p = new Parser(field.innerText);
-        let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-        let hRes = traverse(res, field.innerText);
-        field.innerHTML = hRes;
-
-        setCursor(field, pos, offset);
-    } catch (e) {
-        if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
-        } else {
-            // document.getElementById('result').value = 'Text:' + field.innerText;
-            document.getElementById('result').value = e;
-        }
-    }
-}
-
-if (field.addEventListener) {
-    field.addEventListener("input", listener, false);
-}
-
-function getCursor(node, anchorNode, offset) {
-
-    let pos = 0;
-    if (anchorNode.parentNode === node) {
-        return offset;
-    }
-    else {
-        let curNode = anchorNode;
-        while (curNode !== node) {
-            while (curNode.previousSibling !== null) {
-                pos += curNode.previousSibling.textContent.length;
-                curNode = curNode.previousSibling;
-            }
-            curNode = curNode.parentNode;
-        }
-        pos += offset;
-    }
-    return pos;
-}
-
-function setCursor(node, pos, offset) {
-    // debugger;
-    let curNode = node;
-    let curPos = 0, i = -1;
-    while (curPos < pos) {
-        i++;
-        if (curNode.childNodes[i] !== null) {
-            curPos += curNode.childNodes[i].textContent.length;
-        }
-        else {
-            curNode = curNode.childNodes[i];
-            if (curNode.childNodes.length === 0)  {
-                break;
-            }
-        }
-    }
-    curNode = curNode.childNodes[i];
-    document.getSelection().collapse(curNode.firstChild === null ? curNode : curNode.firstChild,
-        pos - (curPos - curNode.textContent.length));
-}
+// try {
+//     let t = new Parser('(a:v)');
+//     let res = t.parse();
+//     console.log(res.left.begin);
+// } catch (e) {
+//     console.log(e);
+// }
 
 module.exports = Parser;
