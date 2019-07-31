@@ -22,8 +22,8 @@ class Lexer {
 
     scanToken() {
         let c = this.advance();
-        switch (c) {
-            case '(': {
+        switch (true) {
+            case /[(]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
                         this.error("Unexpected token '" + this.tokens[this.tokens.length - 1].type +"':\n", this.tokens[this.tokens.length - 1].begin);
@@ -34,13 +34,13 @@ class Lexer {
                 }
                 this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
             }
-            case ')': this.addToken(operators.RIGHT_PAREN, ')', this.start, this.current); break;
-            case '{': {
+            case /[)]/.test(c): this.addToken(operators.RIGHT_PAREN, ')', this.start, this.current); break;
+            case /[{]/.test(c): {
                 let cur = this.stringBrace();
                 this.addToken('COMPLEX_VALUE', cur, this.start, this.current);
                 break;
             }
-            case '-':  {
+            case /[\-]/.test(c):  {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
                         this.error("Unexpected token '" + this.str[this.start] + "':\n", this.start);
@@ -48,7 +48,7 @@ class Lexer {
                 }
                 this.addToken('-', '-', this.start, this.current);
             } break;
-            case '#': {
+            case /[#]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '#' || this.tokens[this.tokens.length - 1].type === '-') {
                         this.error("Unexpected token '" + this.str[this.start] +"':\n", this.start);
@@ -56,15 +56,15 @@ class Lexer {
                 }
                 this.addToken('#', '#', this.start, this.current);
             } break;
-            case '"': {
+            case /["]/.test(c): {
                 this.addToken('"', '"', this.start, this.current);
                 let cur =  this.stringQuote();
                 this.addToken('QUOTED_TEXT', cur, this.start, this.current);
                 this.addToken('"', '"', this.current - 1, this.current);
                 break;
             }
-            case ':': this.addToken(':', ':', this.start, this.current); break;
-            case '.': {
+            case /[:]/.test(c): this.addToken(':', ':', this.start, this.current); break;
+            case /[.]/.test(c): {
                 if (this.str[this.current] !== '.') {
                     this.error("Unexpected token:\n", this.current - 1);
                 } else {
@@ -73,11 +73,8 @@ class Lexer {
                 }
                 break;
             }
-            case ',': this.addToken(',', ',', this.start, this.current); break; // ->>>
-            case ' ':
-            case '\t':
-            case '\n':
-            case '\r': {
+            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break; // ->>>
+            case /[\s]/.test(c): {
                 this.tokens[this.tokens.length - 1].end++;
                 break;
             }
@@ -196,12 +193,12 @@ class Lexer {
     }
 }
 
-try {
-    let t = new Lexer('test: t.. m');
-    let res = t.scanTokens();
-    console.log(res);
-} catch(e) {
-    console.log(e);
-}
+// try {
+//     let t = new Lexer('test: t.. m');
+//     let res = t.scanTokens();
+//     console.log(res);
+// } catch(e) {
+//     console.log(e);
+// }
 
 module.exports = Lexer;
