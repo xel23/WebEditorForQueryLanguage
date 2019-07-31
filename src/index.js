@@ -22,7 +22,6 @@ function listener () {
         if (e instanceof errorEx) {
             document.getElementById('result').value = e;
         } else {
-            // document.getElementById('result').value = 'Text:' + field.innerText;
             document.getElementById('result').value = e;
         }
     }

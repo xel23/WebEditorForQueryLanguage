@@ -5,42 +5,59 @@
     <title>Web Editor for Hub query grammar</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         #result, .query {
             font-family: 'Roboto Mono', monospace;
         }
-        .PositiveSingleValue {
-            color: #ff761a;
+
+        .PositiveSingleValue, .NegativeSingleValue, .QuotedText, .NegativeText, .Value, .ValueRange, .order {
+            color: #53a7ff;
         }
-        .NegativeSingleValue {
-            color: #ffffff;
+        .operator, .key, .Attribute {
+            font-weight: bold;
+            color: black;
         }
-        .QuotedText {
-            color: #beffb7;
-        }
-        .NegativeText {
-            color: #ff30a1;
-        }
-        .key {
-            color: #ffdc22;
-        }
-        .Attribute, .Value {
-            color: #8d69ff;
-        }
-        .ValueRange {
-            color: #5dff59;
-        }
-        .operator {
-            color: #05d3ff;
-        }
-        .Attribute {
-            color: #ff95ab;
-        }
+
         .Parentheses {
-            color: #ff0800;
+            color: grey;
         }
-        .order {
-            color: #ff489a;
+
+        /*.PositiveSingleValue {*/
+        /*    color: #ff761a;*/
+        /*}*/
+        /*.NegativeSingleValue {*/
+        /*    color: #ffffff;*/
+        /*}*/
+        /*.QuotedText {*/
+        /*    color: #beffb7;*/
+        /*}*/
+        /*.NegativeText {*/
+        /*    color: #ff30a1;*/
+        /*}*/
+        /*.key {*/
+        /*    color: #ffdc22;*/
+        /*}*/
+        /*.Attribute, .Value {*/
+        /*    color: #8d69ff;*/
+        /*}*/
+        /*.ValueRange {*/
+        /*    color: #5dff59;*/
+        /*}*/
+        /*.operator {*/
+        /*    color: #05d3ff;*/
+        /*}*/
+        /*.Attribute {*/
+        /*    color: #ff95ab;*/
+        /*}*/
+        /*.Parentheses {*/
+        /*    color: #ff0800;*/
+        /*}*/
+        /*.order {*/
+        /*    color: #ff489a;*/
+        /*}*/
+        .search {
+            color: #bad2e7;
         }
     </style>
 </head>
@@ -66,9 +83,9 @@
         <div class="col">
             <div class="input-group mb-3">
                 <div class="input-group-prepend">
-                    <span class="input-group-text border-right-0 border-primary text-white bg-primary">Query:</span>
+                    <span class="input-group-text border-right-0 border-primary bg-white"><i class="fa fa-search search" aria-hidden="true"></i></span>
                 </div>
-                <div id="inQuery" class="form-control border-left-0 border-primary query bg-dark text-left" aria-describedby="basic-addon1" contenteditable="true"></div>
+                <div id="inQuery" class="form-control border-left-0 border-primary query bg-white text-left" aria-describedby="basic-addon1" contenteditable="true"></div>
             </div>
         </div>
     </div>
@@ -81,6 +98,6 @@
 </div>
 
 
-<script type="module" src="main.js"></script>
+<script type="module" src="./dist/main.js"></script>
 </body>
 </html>
