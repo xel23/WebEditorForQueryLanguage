@@ -36,19 +36,23 @@ class Highlighter {
                             case 'key':
                             case 'Attribute':
                             case 'Value':
-                            case 'ValueRange':
-                            case 'PositiveSingleValue': {
+                            case 'ValueRange': {
                                 resString += this.wrapper(str.substring(obj.begin, obj.end), obj.type);
                                 break;
                             }
                             case 'NegativeSingleValue': {
-                                resString += this.wrapper(str.substring(obj.minus.begin, obj.end), obj.type);
+                                resString += this.wrapper(str.substring(obj.minus.begin, obj.minus.end), 'operator');
+                                resString += this.wrapper(str.substring(obj.begin, obj.end), obj.type);
+                                break;
+                            }
+                            case 'PositiveSingleValue': {
+                                resString += this.wrapper(str.substring(obj.operator.begin, obj.operator.end), 'operator');
+                                resString += this.wrapper(str.substring(obj.begin, obj.end), obj.type);
                                 break;
                             }
                             case 'OPERATOR':
                             case ':':
-                            case '-':
-                            case '#': {
+                            case '-': {
                                 if ('begin' in obj) {
                                     resString += this.wrapper(str.substring(obj.begin, obj.end), 'operator');
                                 }
