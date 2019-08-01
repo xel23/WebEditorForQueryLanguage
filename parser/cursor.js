@@ -1,12 +1,12 @@
 class Cursor {
     constructor(field) {
         this.field = field;
-        this.anchorNode = window.getSelection().anchorNode;
-        this.offset = window.getSelection().anchorOffset;
-        this.pos = 0;
     }
 
-    getCursor() {
+    get position() {
+        this.pos = 0;
+        this.anchorNode = window.getSelection().anchorNode;
+        this.offset = window.getSelection().anchorOffset;
         if (this.anchorNode.parentNode === this.field) {
             this.pos = this.offset;
         }
@@ -21,12 +21,13 @@ class Cursor {
             }
             this.pos += this.offset;
         }
+        return this.pos;
     }
 
-    setCursor(field) {
-        let curNode = field;
+    set position(position) {
+        let curNode = this.field;
         let curPos = 0, i = -1;
-        while (curPos < this.pos) {
+        while (curPos < position) {
             i++;
             if (curNode.childNodes[i] !== null) {
                 curPos += curNode.childNodes[i].textContent.length;
@@ -39,8 +40,8 @@ class Cursor {
             }
         }
         if (i !== -1) curNode = curNode.childNodes[i];
-        document.getSelection().collapse(curNode.firstChild !== undefined ? curNode.firstChild : curNode,
-            this.pos - (curPos - curNode.textContent.length));
+        document.getSelection().collapse(curNode.firstChild !== undefined && curNode.firstChild !== null ? curNode.firstChild : curNode,
+            position - (curPos - curNode.textContent.length));
     }
 }
 

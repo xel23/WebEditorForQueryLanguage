@@ -72,8 +72,8 @@ class NegativeText extends TermItem {
 
 class PositiveSingleValue extends TermItem {
     constructor(lat, value) {
-        super('PositiveSingleValue', lat.begin, value.end);
-        this.operator = lat.type;
+        super('PositiveSingleValue', value.begin, value.end);
+        this.operator = lat;
         this.lexeme = value.lexeme;
         this.literal = value.literal;
     }

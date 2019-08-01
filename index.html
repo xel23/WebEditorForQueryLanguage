@@ -5,46 +5,60 @@
     <title>Web Editor for Hub query grammar</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         #result, .query {
             font-family: 'Roboto Mono', monospace;
         }
-        .PositiveSingleValue {
-            color: #ff761a;
+        .PositiveSingleValue, .NegativeSingleValue, .QuotedText, .NegativeText, .Value, .ValueRange, .order {
+            color: #53a7ff;
         }
-        .NegativeSingleValue {
-            color: #ffffff;
-        }
-        .QuotedText {
-            color: #beffb7;
-        }
-        .NegativeText {
-            color: #ff30a1;
-        }
-        .key {
-            color: #ffdc22;
-        }
-        .Attribute, .Value {
-            color: #8d69ff;
-        }
-        .ValueRange {
-            color: #5dff59;
-        }
-        .operator {
-            color: #05d3ff;
-        }
-        .Attribute {
-            color: #ff95ab;
+        .operator, .key, .Attribute {
+            font-weight: bold;
+            color: black;
         }
         .Parentheses {
-            color: #ff0800;
+            color: grey;
         }
-        .order {
-            color: #ff489a;
+        /*.PositiveSingleValue {*/
+        /*    color: #ff761a;*/
+        /*}*/
+        /*.NegativeSingleValue {*/
+        /*    color: #ffffff;*/
+        /*}*/
+        /*.QuotedText {*/
+        /*    color: #beffb7;*/
+        /*}*/
+        /*.NegativeText {*/
+        /*    color: #ff30a1;*/
+        /*}*/
+        /*.key {*/
+        /*    color: #ffdc22;*/
+        /*}*/
+        /*.Attribute, .Value {*/
+        /*    color: #8d69ff;*/
+        /*}*/
+        /*.ValueRange {*/
+        /*    color: #5dff59;*/
+        /*}*/
+        /*.operator {*/
+        /*    color: #05d3ff;*/
+        /*}*/
+        /*.Attribute {*/
+        /*    color: #ff95ab;*/
+        /*}*/
+        /*.Parentheses {*/
+        /*    color: #ff0800;*/
+        /*}*/
+        /*.order {*/
+        /*    color: #ff489a;*/
+        /*}*/
+        .search {
+            color: #bad2e7;
         }
     </style>
 </head>
-<body class="text-center bg-dark">
+<body class="text-center">
 <ul class="nav justify-content-center mt-3">
     <li class="nav-item">
         <a class="nav-link active" href="#"><h2>Parser for query grammar</h2></a>
@@ -52,30 +66,20 @@
 </ul>
 
 <div class="container mt-3">
-<!--    <div class="row">-->
-<!--        <div class="col">-->
-<!--            <div class="input-group mb-3">-->
-<!--                <div class="input-group-prepend">-->
-<!--                    <span class="input-group-text border-right-0 border-primary text-white bg-primary" id="basic-addon1">Query:</span>-->
-<!--                </div>-->
-<!--                <input id="inQuery" type="text" class="form-control border-left-0 border-primary query" placeholder="put your query here" aria-describedby="basic-addon1">-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
     <div class="row">
         <div class="col">
             <div class="input-group mb-3">
                 <div class="input-group-prepend">
-                    <span class="input-group-text border-right-0 border-primary text-white bg-primary">Query:</span>
+                    <span class="input-group-text border-right-0 border-primary bg-white"><i class="fa fa-search search" aria-hidden="true"></i></span>
                 </div>
-                <div id="inQuery" class="form-control border-left-0 border-primary query bg-dark text-left" aria-describedby="basic-addon1" contenteditable="true"></div>
+                <div id="inQuery" class="form-control border-left-0 border-primary query bg-white text-left" aria-describedby="basic-addon1" contenteditable="true"></div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col text-left">
-            <label class="text-white" for="result">Result tree:</label>
-            <textarea id="result" class="form-control" rows="32"></textarea>
+            <label class="text-primary" for="result">Result tree:</label>
+            <textarea id="result" class="form-control border-primary" rows="32"></textarea>
         </div>
     </div>
 </div>

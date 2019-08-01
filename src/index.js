@@ -2,28 +2,32 @@ const Highlighter = require('../parser/highlighter/highlighter');
 const Parser = require('../parser/parser');
 const errorEx = require('../parser/exceptions/syntaxException');
 const Cursor = require('../parser/cursor');
-
-console.log('Hello World');
+const UndoRedo = require('../parser/UndoRedo');
 
 let field = document.getElementById('inQuery');
+let tree = document.getElementById('result');
+let cursor = new Cursor(field);
+let ur = new UndoRedo();
+ur.addState('', 0);
 
 function listener () {
     try {
-        let cursor = new Cursor(field);
-        cursor.getCursor();
-
-        let p = new Parser(field.innerText);
+        let inputText = field.innerText;
+        let position = cursor.position;
+        if (arguments[0] !== 0)
+            ur.addState(inputText, position);
+        let p = new Parser(inputText);
         let res = p.parse();
-        document.getElementById('result').value = JSON.stringify(res, null, 4);
-        let highlightedQuery = new Highlighter(res, field.innerText)
+        tree.value = JSON.stringify(res, null, 4);
+        let highlightedQuery = new Highlighter(res, inputText);
         field.innerHTML = highlightedQuery.getResult();
-        cursor.setCursor(field);
+
+        cursor.position = position;
     } catch (e) {
         if (e instanceof errorEx) {
-            document.getElementById('result').value = e;
+            tree.value = e;
         } else {
-            // document.getElementById('result').value = 'Text:' + field.innerText;
-            document.getElementById('result').value = e;
+            tree.value = e;
         }
     }
 }
@@ -31,3 +35,26 @@ function listener () {
 if (field.addEventListener) {
     field.addEventListener("input", listener, false);
 }
+
+function keyPress(keys) {
+    if (keys.keyCode === 90 && keys.ctrlKey && keys.shiftKey) {
+        let previousState = ur.redo();
+        if (previousState !== -1) {
+            field.innerText = previousState.line;
+            cursor.position = previousState.pos;
+
+            listener(0);
+        }
+    }
+    else if (keys.keyCode === 90 && keys.ctrlKey) {
+        let previousState = ur.undo();
+        if (previousState !== -1) {
+            field.innerText = previousState.line;
+            cursor.position = previousState.pos;
+
+            listener(0);
+        }
+    }
+}
+
+document.onkeydown = keyPress;
