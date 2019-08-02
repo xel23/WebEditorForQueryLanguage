@@ -41,7 +41,7 @@ class Cursor {
         }
         if (i !== -1) curNode = curNode.childNodes[i];
         document.getSelection().collapse(curNode.firstChild !== undefined && curNode.firstChild !== null ? curNode.firstChild : curNode,
-            position - (curPos - curNode.textContent.length));
+            position - ((curPos - curNode.textContent.length) > 0 ? (curPos - curNode.textContent.length) : 0));
     }
 }
 
