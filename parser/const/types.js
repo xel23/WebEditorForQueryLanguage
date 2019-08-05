@@ -9,7 +9,8 @@ const types = Object.freeze({
     ATTRIBUTE: 'ATTRIBUTE',
     SORT_ATTRIBUTE: 'SORT_ATTRIBUTE',
     SINGLE_VALUE: 'SINGLE_VALUE',
-    OPERATOR: 'OPERATOR'
+    OPERATOR: 'OPERATOR',
+    TEXT: 'TEXT'
 });
 
 module.exports = types;

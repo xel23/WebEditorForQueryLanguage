@@ -155,6 +155,9 @@ class AttributeFilter {
         }
         else {
             this.type = value.type === 'WORD' ? 'Value' : value.type;
+            if (value.type === 'TEXT') {
+                this.type = 'TEXT';
+            }
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -165,7 +168,7 @@ class AttributeFilter {
 
 class Attribute {
     constructor(value) {
-        this.type = 'Attribute';
+        this.type = value.type === 'TEXT' ? 'TEXT' : 'Attribute';
         this.lexeme = value.lexeme;
         this.literal = value.literal;
         this.begin = value.begin;
@@ -237,7 +240,10 @@ class CategorizedFilter extends TermItem {
 
 class SortAttribute {
     constructor(value) {
-        let word = value.literal.split(' ');
+        let word = value;
+        if (value.type !== 'TEXT') {
+            word = value.literal.split(' ');
+        }
         if (word.length > 1) {
             this.type = value.type;
             this.lexeme = word[0];
@@ -285,6 +291,14 @@ class Sort extends TermItem {
         else {
             this.value.push(new SortAttribute(token));
         }
+    }
+}
+
+class Text extends TermItem {
+    constructor(token) {
+        super('Text', token.begin, token.end);
+        this.lexeme = token.lexeme;
+        this.literal = token.literal;
     }
 }
 
@@ -814,6 +828,96 @@ class Sort extends TermItem {
                     new Token('..', '..', '..', 7, 10),
                     new Token('WORD', 'm', 'm', 10, 11)
                 )
+            )},
+
+    {input: 'sort by: aa .. bb', output:
+            new Sort(
+                new Token('WORD', 'sort by', 'sort by', 0, 7),
+                new Token(':', ':', ':', 7, 9),
+                new Token('TEXT', 'aa .. bb', 'aa .. bb', 9, 17)
+            )},
+
+    {input: 'has: aa .. bb', output:
+            new Has(
+                new Token('WORD', 'has', 'has', 0, 3),
+                new Token(':', ':', ':', 3, 5),
+                new Token('TEXT', 'aa .. bb', 'aa .. bb', 5, 13)
+            )},
+
+    {input: 'a: #dff', output:
+            new CategorizedFilter(
+                new Attribute(
+                    new Token('WORD', 'a', 'a', 0, 1)
+                ),
+                new Token(':', ':', ':', 1, 3),
+                new Token('TEXT', '#dff', '#dff', 3, 7)
+            )},
+
+    {input: 'sort by: #aaa', output:
+            new Sort(
+                new Token('WORD', 'sort by', 'sort by', 0, 7),
+                new Token(':', ':', ':', 7, 9),
+                new Token('TEXT', '#aaa', '#aaa', 9, 13)
+            )},
+
+    {input: 'sort by: -dvfv', output:
+            new Sort(
+                new Token('WORD', 'sort by', 'sort by', 0, 7),
+                new Token(':', ':', ':', 7, 9),
+                new Token('TEXT', '-dvfv', '-dvfv', 9, 14)
+            )},
+
+    {input: 'has: #ff', output:
+            new Has(
+                new Token('WORD', 'has', 'has', 0, 3),
+                new Token(':', ':', ':', 3, 5),
+                new Token('TEXT', '#ff', '#ff', 5, 8)
+            )},
+
+    {input: 'has: ss, #sss', output:
+            new Has(
+                new Token('WORD', 'has', 'has', 0, 3),
+                new Token(':', ':', ':', 3, 5),
+                [
+                    new Token('WORD', 'ss', 'ss', 5, 7),
+                    new Token(',', ',', ',', 7, 9),
+                    new Token('TEXT', '#sss', '#sss', 9, 13)
+                ]
+            )},
+
+    {input: 'sort by: dd, #df, -dnv, sdf', output:
+            new Sort(
+                new Token('WORD', 'sort by', 'sort by', 0, 7),
+                new Token(':', ':', ':', 7, 9),
+                [
+                    new Token('Value', 'dd', 'dd', 9, 11),
+                    new Token(',', ',', ',', 11, 13),
+                    new Token('TEXT', '#df', '#df', 13, 16),
+                    new Token(',', ',', ',', 16, 18),
+                    new Token('TEXT', '-dnv', '-dnv', 18, 22),
+                    new Token(',', ',', ',', 22, 24),
+                    new Token('Value', 'sdf', 'sdf', 24, 27)
+                ]
+            )},
+
+    {input: 'a: as, -a, #d, r', output:
+            new CategorizedFilter(
+                new Attribute(
+                    new Token('WORD', 'a', 'a', 0, 1)
+                ),
+                new Token(':', ':', ':', 1, 3),
+                [
+                    new Token('WORD', 'as', 'as', 3, 5),
+                    new Token(',', ',', ',', 5, 7),
+                    new NegativeSingleValue(
+                        new Token('-', '-','-', 7, 8),
+                        new Token('WORD', 'a', 'a', 8, 9)
+                    ),
+                    new Token(',',',',',', 9, 11),
+                    new Token('TEXT', '#d', '#d', 11, 13),
+                    new Token(',',',',',', 13, 15),
+                    new Token('WORD', 'r', 'r', 15, 16)
+                ]
             )},
 
 ].forEach((it) => {

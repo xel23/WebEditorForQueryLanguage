@@ -100,7 +100,6 @@ function getNode(position) {
             }
         }
     }
-    if (i !== -1) curNode = curNode.childNodes[i];
     return i < 0 ? 0 : i;
 }
 
@@ -123,7 +122,7 @@ function keyPress(keys) {
             listener(0);
         }
     }
-    else if (keys.altKey && (keys.keyCode === 16)) {
+    else if (keys.altKey && (keys.keyCode === 38)) {
         let inputText = field.innerText;
         let p = new Parser(inputText);
         let res = p.parse();
@@ -138,6 +137,7 @@ function keyPress(keys) {
         range.setEnd(field, getNode(positions.end) + 1);
         document.getSelection().removeAllRanges();
         document.getSelection().addRange(range);
+        keys.preventDefault();
     }
 }
 

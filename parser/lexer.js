@@ -73,18 +73,19 @@ class Lexer {
                 }
                 break;
             }
-            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break; // ->>>
+            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break;
             case /[\s]/.test(c): {
                 this.tokens[this.tokens.length - 1].end++;
                 break;
             }
             default: {
-                if (this.isAlphaNumeric(c)) {
-                    this.identifier();
-                }
-                else {
-                    this.error("Unexpected token:\n", this.current - 1);
-                }
+                // if (this.isAlphaNumeric(c)) {
+                //     this.identifier();
+                // }
+                // else {
+                //     this.error("Unexpected token:\n", this.current - 1);
+                // }
+                this.identifier();
             }
         }
     }
@@ -157,30 +158,43 @@ class Lexer {
         return /[a-zA-Z_\-*?.]/.test(c);
     }
 
-    identifier() {
-        while (this.isAlphaNumeric(this.peek())) this.advance();
-
-        while(this.str[this.current] === ' ') {
-            this.advance();
+    isText(c) {
+        if (c !== undefined && c !== '\0') {
+            return !(/[\s:,(){}\-#."*?a-zA-Z_]/.test(c));
         }
+        return false;
+    }
 
-        let curWord = this.str.substring(this.start, this.current);
+    identifier() {
+        if (this.isText(this.str[this.current])) {
+            while (this.isText(this.peek())) this.advance();
 
-        if (curWord.indexOf('..') !== -1) {
-            let pos = this.start + curWord.indexOf('..');
-            this.addToken('WORD', this.str.substring(this.start, pos)
-                .replace(/ /g, ''), this.start, pos);
-            let i = 0;
-            while (this.str[pos + 2 + i] === ' ') i++;
-            this.addToken('..', '..', pos, pos + 2 + i);
-            if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
-                this.addToken('WORD', this.str.substring(pos + 2, this.current)
-                    .replace(/ /g, ''), pos + 2, this.current);
-            }
+            this.addToken('TEXT', this.str.substring(this.start, this.current), this.start, this.current);
         }
         else {
-            this.addToken('WORD', this.str.substring(this.start, this.current)
-                .replace(/ /g, ''), this.start, this.current);
+            while (this.isAlphaNumeric(this.peek())) this.advance();
+            while(/[\s]/.test(this.str[this.current])) {
+                this.advance();
+            }
+
+            let curWord = this.str.substring(this.start, this.current);
+
+            if (curWord.indexOf('..') !== -1) {
+                let pos = this.start + curWord.indexOf('..');
+                this.addToken('WORD', this.str.substring(this.start, pos)
+                    .replace(/ /g, ''), this.start, pos);
+                let i = 0;
+                while (this.str[pos + 2 + i] === ' ') i++;
+                this.addToken('..', '..', pos, pos + 2 + i);
+                if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
+                    this.addToken('WORD', this.str.substring(pos + 2, this.current)
+                        .replace(/ /g, ''), pos + 2, this.current);
+                }
+            }
+            else {
+                this.addToken('WORD', this.str.substring(this.start, this.current)
+                    .replace(/ /g, ''), this.start, this.current);
+            }
         }
     }
 
@@ -192,5 +206,13 @@ class Lexer {
         new errorEx(message, n, this.str);
     }
 }
+
+// try {
+//     let t = new Lexer('a:v d|');
+//     let res = t.scanTokens();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
 module.exports = Lexer;
