@@ -36,7 +36,8 @@ class Highlighter {
                             case 'key':
                             case 'Attribute':
                             case 'Value':
-                            case 'ValueRange': {
+                            case 'ValueRange':
+                            case 'TEXT':  {
                                 resString += this.wrapper(str.substring(obj.begin, obj.end), obj.type);
                                 break;
                             }

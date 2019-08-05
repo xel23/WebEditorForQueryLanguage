@@ -351,12 +351,12 @@ class Parser {
                         }
                     }
                     else {
-                        this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
+                        // this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
                     }
                 }
             }
             else {
-                this.error("Unexpected value after comma:\n", right.begin);
+                // this.error("Unexpected value after comma:\n", right.begin);
             }
         }
 
@@ -503,7 +503,7 @@ class Parser {
         }
 
         else {
-            this.error("Unexpected word:\n", expr.begin);
+            // this.error("Unexpected word:\n", expr.begin);
         }
 
         return expr;
@@ -553,7 +553,8 @@ class Parser {
         else if (this.match(types.WORD, types.COMPLEX_VALUE)) {
             let attr = this.previous();
             if (attr.lexeme.toUpperCase() in operators) {
-                this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be value.\n", attr.begin);
+                // this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be value.\n", attr.begin);
+                attr.type = 'TEXT';
             }
             if (attr.lexeme === 'sort') {
                 let by = this.advance();
