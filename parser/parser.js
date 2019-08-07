@@ -479,7 +479,15 @@ class Parser {
                                 right = new ValueRange(right_1, operator_vr, right_vr);
                             else {
                                 this.current = curToken;
-                                return expr;
+                                if (expr.lexeme === 'sort by') {
+                                    return new Sort(expr, operator, right_1);
+                                }
+                                else if (expr.lexeme === 'has') {
+                                    return new Has(expr, operator, right_1);
+                                }
+                                else {
+                                    return new CategorizedFilter(new Attribute(expr), operator, right_1);
+                                }
                             }
                         }
                         else {
@@ -731,7 +739,7 @@ class Parser {
 
 const hl = require('./highlighter/highlighter');
 try {
-    let t = new Parser('(has: x or sort by: file) or l:');
+    let t = new Parser('a:c.. #');
     let res = t.parse();
     // let highlightedQuery = new hl(res, 'has: a, b .. v');
     // let hlRes = highlightfedQuery.getResult();
