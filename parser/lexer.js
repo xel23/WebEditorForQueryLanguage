@@ -26,10 +26,10 @@ class Lexer {
             case /[(]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
-                        this.error("Unexpected token '" + this.tokens[this.tokens.length - 1].type +"':\n", this.tokens[this.tokens.length - 1].begin);
+                        this.identifier();
                     }
                     if (this.str[this.current - 2] !== ' ' && this.str[this.current - 1] !== '(') {
-                        this.error("Unexpected token:\n", this.current);
+                        this.identifier();
                     }
                 }
                 this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
@@ -43,7 +43,7 @@ class Lexer {
             case /[\-]/.test(c):  {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
-                        this.error("Unexpected token '" + this.str[this.start] + "':\n", this.start);
+                        this.identifier();
                     }
                 }
                 this.addToken('-', '-', this.start, this.current);
@@ -51,7 +51,7 @@ class Lexer {
             case /[#]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '#' || this.tokens[this.tokens.length - 1].type === '-') {
-                        this.error("Unexpected token '" + this.str[this.start] +"':\n", this.start);
+                        this.identifier();
                     }
                 }
                 this.addToken('#', '#', this.start, this.current);
@@ -65,11 +65,12 @@ class Lexer {
             }
             case /[:]/.test(c): this.addToken(':', ':', this.start, this.current); break;
             case /[.]/.test(c): {
-                if (this.str[this.current] !== '.') {
-                    this.error("Unexpected token:\n", this.current - 1);
-                } else {
+                if (this.str[this.current] === '.') {
                     this.advance();
                     this.addToken('..', '..', this.start, this.current);
+                }
+                else {
+                    this.identifier();
                 }
                 break;
             }
@@ -79,12 +80,6 @@ class Lexer {
                 break;
             }
             default: {
-                // if (this.isAlphaNumeric(c)) {
-                //     this.identifier();
-                // }
-                // else {
-                //     this.error("Unexpected token:\n", this.current - 1);
-                // }
                 this.identifier();
             }
         }
@@ -133,9 +128,9 @@ class Lexer {
             this.advance();
         }
 
-        if (this.isAtEnd()) {
-            this.error("SyntaxError: missing '}':\n", this.current);
-        }
+        // if (this.isAtEnd()) {
+        //     this.error("SyntaxError: missing '}':\n", this.current);
+        // }
 
         this.advance();
         return this.str.substring(this.start + 1, this.current - 1);
@@ -146,9 +141,9 @@ class Lexer {
             this.advance();
         }
 
-        if (this.isAtEnd()) {
-            this.error("SyntaxError: missing '\"':\n", this.current);
-        }
+        // if (this.isAtEnd()) {
+        //     this.error("SyntaxError: missing '\"':\n", this.current);
+        // }
 
         this.advance();
         return this.str.substring(this.start + 1, this.current - 1);
@@ -166,8 +161,8 @@ class Lexer {
     }
 
     identifier() {
-        if (this.isText(this.str[this.current])) {
-            while (this.isText(this.peek())) this.advance();
+        if (this.isText(this.str[this.current - 1])) {
+            while (this.isText(this.peek()) || this.isAlphaNumeric(this.peek())) this.advance();
 
             this.addToken('TEXT', this.str.substring(this.start, this.current), this.start, this.current);
         }
@@ -202,17 +197,9 @@ class Lexer {
         return this.isDigit(c) || this.isAlpha(c);
     }
 
-    error(message, n) {
-        new errorEx(message, n, this.str);
-    }
+    // error(message, n) {
+    //     new errorEx(message, n, this.str);
+    // }
 }
-
-// try {
-//     let t = new Lexer('a:v d|');
-//     let res = t.scanTokens();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
 
 module.exports = Lexer;
