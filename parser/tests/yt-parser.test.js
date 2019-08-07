@@ -964,6 +964,36 @@ class Text extends TermItem {
                 )
             )},
 
+    {input: 'test: t or', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 6),
+                    new Token('WORD', 't', 't', 6, 8)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'or', 'or', 8, 10)
+                )
+            )},
+
+    {input: 'test: t or k', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 6),
+                    new Token('WORD', 't', 't', 6, 8)
+                ),
+                new Token('OPERATOR', 'or', 'or', 8, 11),
+                new Text(
+                    new Token('TEXT', 'k', 'k', 11, 12)
+                )
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);

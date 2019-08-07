@@ -292,16 +292,23 @@ class Parser {
 
         while (this.matchOperator(operators.OR)) {
             let operator = this.previous();
+            let curToken = this.current;
             operator.type = 'OPERATOR';
-            let right = this.andExpression();
-            if (right !== null) {
-                if (right.type === types.WORD) {
-                    right.type = types.TEXT;
+            let right;
+            try {
+                right = this.andExpression();
+                if (right !== null) {
+                    if (right.type === types.WORD) {
+                        right.type = types.TEXT;
+                    }
+                    expr = new Binary(expr, operator, right);
                 }
-                expr = new Binary(expr, operator, right);
-            }
-            else {
-                flag = true;
+                else {
+                    flag = true;
+                }
+            } catch (e) {
+                expr = new Binary(expr, operator, new Text(new Token('TEXT', this.str.substring(this.tokens[curToken].begin, this.tokens[this.current - 1].end),
+                    this.str.substring(this.tokens[curToken].begin, this.tokens[this.current - 1].end), this.tokens[curToken].begin, this.tokens[this.current - 1].end)));
             }
         }
 
@@ -314,6 +321,10 @@ class Parser {
 
     andExpression() {
         let expr = this.andOperand();
+
+        if (expr === null) {
+            return expr;
+        }
 
         if (expr.type === types.WORD) {
             this.error('AndOperand can not be WORD\n', expr.begin);
@@ -725,7 +736,7 @@ class Parser {
 
 const hl = require('./highlighter/highlighter');
 try {
-    let t = new Parser('a: {b c}');
+    let t = new Parser('a:b or k');
     let res = t.parse();
     // let highlightedQuery = new hl(res, 'has: a, b .. v');
     // let hlRes = highlightfedQuery.getResult();
