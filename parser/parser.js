@@ -434,8 +434,11 @@ class Parser {
     item() {
         let expr = this.unary(arguments[0] || 'key');
 
-        if (expr === null) {
-            return null;
+        if (expr === null) return null;
+
+        if (expr.type !== types.WORD && !(expr instanceof Unary || expr instanceof Grouping || expr instanceof QuotedText)) {
+            expr.type = types.TEXT;
+            return expr;
         }
 
         if (!(expr instanceof Unary)) {
@@ -671,6 +674,10 @@ class Parser {
             return new Grouping(left, expr, right);
         }
 
+        if (this.tokens.type !== types.WORD) {
+            return this.advance();
+        }
+
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
             return this.advance();
         }
@@ -739,10 +746,8 @@ class Parser {
 
 const hl = require('./highlighter/highlighter');
 try {
-    let t = new Parser('a:c.. #');
+    let t = new Parser(':v');
     let res = t.parse();
-    // let highlightedQuery = new hl(res, 'has: a, b .. v');
-    // let hlRes = highlightfedQuery.getResult();
     console.log(res);
 } catch (e) {
     console.log(e);

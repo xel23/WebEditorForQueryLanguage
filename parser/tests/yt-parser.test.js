@@ -1015,6 +1015,23 @@ class Text extends TermItem {
                 )
             )},
 
+    {input: ';:v', output:
+            new Binary(
+                new Binary(
+                    new Text(
+                        new Token('TEXT', ';', ';', 0, 1)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', ':', ':', 1, 2)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'v', 'v', 2, 3)
+                )
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);
