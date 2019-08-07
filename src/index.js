@@ -14,7 +14,7 @@ ur.addState('', 0);
 
 function listener () {
     try {
-        let inputText = field.innerText;
+        let inputText = field.innerText.replace(/\n/g, '');
         let position = cursor.position;
         if (arguments[0] !== 0)
             ur.addState(inputText, position);
@@ -72,6 +72,7 @@ function search(obj, pos) {
                 case 'Has':
                 case 'Sort':
                 case 'OPERATOR':
+                case 'TEXT':
                 {
                     if (obj.begin <= pos && obj.end >= pos) {
                         return {

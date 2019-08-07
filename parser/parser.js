@@ -250,6 +250,8 @@ class Parser {
     }
 
     parse() {
+        if (this.str.length === 0) return this.str;
+
         let tree;
         try {
             tree = this.getTree();
