@@ -46,6 +46,9 @@ function search(obj, pos) {
         if (res !== undefined) return res;
         return search(obj.right, pos);
     }
+    if (obj instanceof Grouping) {
+        return search(obj.expr, pos);
+    }
     for (let key in obj) {
         if (obj[key] instanceof Grouping) {
             search(obj[key].expr, pos);
@@ -129,8 +132,6 @@ function keyPress(keys) {
         let startPos = cursor.position;
 
         let positions = search(res, startPos);
-
-
 
         let range = new Range();
         range.setStart(field, getNode(positions.begin));

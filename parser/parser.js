@@ -282,6 +282,11 @@ class Parser {
         if (tree instanceof Token) {
             tree.type = types.TEXT;
         }
+        else if (tree instanceof ValueRange) {
+            tree = new Text(
+                new Token('TEXT', this.str, this.str, 0, this.str.length)
+            );
+        }
         return tree;
     }
 
@@ -545,8 +550,6 @@ class Parser {
                     }
                 }
                 else {
-                    // return new Text(new Token('TEXT', this.str.substring(expr.begin, operator.end),
-                        // this.str.substring(expr.begin, operator.end), expr.begin, operator.end));
                     this.current = curToken;
                 }
             }
@@ -579,11 +582,6 @@ class Parser {
                 }
             }
         }
-
-        // ???
-        // else {
-        //     expr.type = types.TEXT;
-        // }
 
         return expr;
     }
@@ -654,7 +652,7 @@ class Parser {
 
         if (this.match(operators.LEFT_PAREN)) {
             let left = this.previous();
-            let expr = this.orExpression();
+            let expr = this.getTree();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
                 this.error("Missing ')' after expression:\n", this.str.length);
@@ -664,15 +662,10 @@ class Parser {
         }
 
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            // this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n",
-            //     this.tokens[this.current - 1].end);
-            // return null;
-            // if (this.isAtEnd()) return null;
             return this.advance();
         }
 
         else {
-            // this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
             return null;
         }
     }
@@ -736,7 +729,7 @@ class Parser {
 
 const hl = require('./highlighter/highlighter');
 try {
-    let t = new Parser('a:b or k');
+    let t = new Parser('(has: x or sort by: file) or l:');
     let res = t.parse();
     // let highlightedQuery = new hl(res, 'has: a, b .. v');
     // let hlRes = highlightfedQuery.getResult();
