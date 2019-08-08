@@ -12,7 +12,7 @@ ur.addState('', 0);
 
 function listener () {
     try {
-        let inputText = field.innerText;
+        let inputText = field.innerText.replace(/\n/g, '');
         let position = cursor.position;
         if (arguments[0] !== 0)
             ur.addState(inputText, position);
@@ -55,6 +55,21 @@ function keyPress(keys) {
 
             listener(0);
         }
+    }
+    else if (keys.altKey && (keys.keyCode === 38)) {
+        let range = document.createRange();
+        if (window.getSelection().anchorNode === field) {
+            keys.preventDefault();
+            return;
+        }
+        if (window.getSelection().anchorNode.nodeType === 3)
+            range.selectNode(window.getSelection().anchorNode.parentNode);
+        else
+            range.selectNode(window.getSelection().anchorNode);
+        document.getSelection().removeAllRanges();
+        document.getSelection().addRange(range);
+
+        keys.preventDefault();
     }
 }
 

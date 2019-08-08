@@ -6,224 +6,16 @@ const Token = require('./token');
 const Binary = require('./general/Binary');
 const Unary = require('./general/Unary');
 const Grouping = require('./general/Grouping');
-
-class TermItem {
-    constructor (type, being, end) {
-        this.type = type;
-        this.begin = being;
-        this.end = end;
-    }
-}
-
-class QuotedText extends TermItem {
-    constructor(leftQuote, text, rightQuote) {
-        super('QuotedText', leftQuote.begin, rightQuote.end);
-        this.leftQuote = leftQuote;
-        this.lexeme = text.lexeme;
-        this.literal = text.literal;
-        this.begin = leftQuote.begin;
-        this.end = rightQuote.end;
-        this.rightQuote = rightQuote;
-    }
-}
-
-class NegativeText extends TermItem {
-    constructor(minus, qt) {
-        super('NegativeText', minus.begin, qt.end);
-        this.minus = minus;
-        this.text = qt;
-    }
-}
-
-class PositiveSingleValue extends TermItem {
-    constructor(lat, value) {
-        super('PositiveSingleValue', value.begin, value.end);
-        this.operator = lat;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-    }
-}
-
-class NegativeSingleValue extends TermItem {
-    constructor(minus, value) {
-        super('NegativeSingleValue', value.begin, value.end);
-        this.minus = minus;
-        if (value instanceof ValueRange) {
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else {
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-        }
-    }
-}
-
-class ValueRange {
-    constructor(leftVal, operator, rightVal) {
-        this.type = 'ValueRange';
-        this.leftVal = leftVal;
-        this.operator = operator;
-        this.rightVal = rightVal;
-        this.begin = leftVal.begin;
-        this.end = rightVal.end;
-    }
-}
-
-class AttributeFilter {
-    constructor(value) {
-        if (value instanceof ValueRange) {
-            this.type = 'ValueRange';
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else if (value instanceof NegativeSingleValue) {
-            this.type = value.type;
-            this.operator = value.minus;
-            if (value.left_lexeme !== undefined) {
-                this.left_lexeme = value.left_lexeme;
-                this.left_lexeme_begin = value.left_lexeme_begin;
-                this.left_lexeme_end = value.left_lexeme_end;
-                this.left_literal = value.left_literal;
-                this.right_lexeme = value.right_lexeme;
-                this.right_lexeme_begin = value.right_lexeme_begin;
-                this.right_lexeme_end = value.right_lexeme_end;
-                this.right_literal = value.right_literal;
-                this.vr_operator = value.vr_operator;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-            else {
-                this.lexeme = value.lexeme;
-                this.literal = value.literal;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-        }
-        else {
-            this.type = value.type === 'WORD' ? 'Value' : value.type;
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-            this.begin = value.begin;
-            this.end = value.end;
-        }
-    }
-}
-
-class Attribute {
-    constructor(value) {
-        this.type = 'Attribute';
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this.begin = value.begin;
-        this.end = value.end;
-        if (value instanceof NegativeSingleValue) {
-            this.begin = value.minus.end;
-            this.operator = value.minus;
-        }
-        if (arguments[1] !== undefined) this.operator = arguments[1];
-    }
-}
-
-class Has extends TermItem {
-    constructor(has, operator, value) {
-        super('Has', has.begin, value.end);
-        this.key = has;
-        this.key.type = 'key';
-        this.operator = operator;
-        this.value = [];
-        if (arguments[3] !== undefined) {
-            this.value.push(new Attribute(value, arguments[3]));
-        }
-        else {
-            this.value.push(new Attribute(value));
-        }
-    }
-
-    addAttribute(token, comma) {
-        this.value.push(comma);
-        this.value.push(new Attribute(token));
-        this.end = token.end;
-    }
-}
-
-class CategorizedFilter extends TermItem {
-    constructor(attribute, operator, attributeFilter) {
-        super('CategorizedFilter', attribute.begin, attributeFilter instanceof ValueRange ? attributeFilter.rightVal.end : attributeFilter.end);
-        this.attribute = attribute;
-        this.operator = operator;
-        this.attributeFilter = [];
-
-        this.attributeFilter.push(new AttributeFilter(attributeFilter));
-    }
-
-    addAttributeFilter(token, comma) {
-        this.end = token instanceof ValueRange ? token.rightVal.end : token.end;
-
-        this.attributeFilter.push(comma);
-        this.attributeFilter.push(new AttributeFilter(token));
-    }
-}
-
-class SortAttribute {
-    constructor(value) {
-        this.type = value.type;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this.begin = value.begin;
-        this.end = value.end;
-        if (arguments[1] !== undefined) {
-            this.order = arguments[1];
-        }
-    }
-}
-
-class Sort extends TermItem {
-    constructor(sortBy, operator, value) {
-        super('Sort', sortBy.begin, value.end);
-        this.key = sortBy;
-        this.key.type = 'key';
-        this.operator = operator;
-        this.value = [];
-        if (arguments[3] !== undefined) {
-            this.value.push(new SortAttribute(value, arguments[3]));
-            this.end = arguments[3].end;
-        }
-        else {
-            this.value.push(new SortAttribute(value));
-        }
-    }
-
-    addValue(token, comma) {
-        this.value.push(comma);
-        if (arguments[2] !== undefined) {
-            this.value.push(new SortAttribute(token, arguments[2]));
-            this.end = arguments[2].end;
-        }
-        else {
-            this.value.push(new SortAttribute(token));
-            this.end = token.end;
-        }
-    }
-}
+const Has = require('./general/Has');
+const QuotedText = require('./general/QuotedText');
+const NegativeText = require('./general/NegativeText');
+const PositiveSingleValue = require('./general/PositiveSingleValue');
+const NegativeSingleValue = require('./general/NegativeSingleValue');
+const ValueRange = require('./general/ValueRange');
+const CategorizedFilter = require('./general/CategorizedFilter');
+const Sort = require('./general/Sort');
+const Text = require('./general/Text');
+const Attribute = require('./general/Attribute');
 
 
 class Parser {
@@ -239,14 +31,44 @@ class Parser {
     }
 
     parse() {
-        let tree = this.getTree();
-        while (this.current < this.tokens.length - 1 || tree instanceof Token) {
+        if (this.str.length === 0) return this.str;
+
+        let tree;
+        try {
+            tree = this.getTree();
+        } catch (e) {
+            console.log(e.toString());
+            tree = new Text(new Token('TEXT', this.str.substring(0, this.tokens[this.current - 1].end),
+                this.str.substring(0, this.tokens[this.current - 1].end), 0, this.tokens[this.current - 1].end));
+        }
+        while (this.current < this.tokens.length - 1) {
+            let start = this.current;
             let operator = new Token('OPERATOR', 'and', 'and');
-            let rightTree = this.getTree();
-            if (rightTree instanceof Token) {
-                this.error("Incomplete query after: '" + this.tokens[this.current - 2].literal + "'\n", rightTree.begin);
+            let rightTree;
+            try {
+                rightTree = this.getTree();
+                if (rightTree instanceof Token || rightTree instanceof ValueRange) {
+                    rightTree = new Text(
+                        new Token('TEXT', this.str.substring(this.tokens[start].begin, this.tokens[this.current - 1].end),
+                            this.str.substring(this.tokens[start].begin, this.tokens[this.current - 1].end),
+                            this.tokens[start].begin, this.tokens[this.current - 1].end));
+                }
+                tree = new Binary(tree, operator, rightTree);
+            } catch(e) {
+                tree = new Binary(tree, operator,
+                    new Text(
+                        new Token('TEXT', this.str.substring(this.tokens[start].begin, this.tokens[this.current - 1].end),
+                            this.str.substring(this.tokens[start].begin, this.tokens[this.current - 1].end),
+                            this.tokens[start].begin, this.tokens[this.current - 1].end)));
             }
-            tree = new Binary(tree, operator, rightTree);
+        }
+        if (tree instanceof Token) {
+            tree.type = types.TEXT;
+        }
+        else if (tree instanceof ValueRange) {
+            tree = new Text(
+                new Token('TEXT', this.str, this.str, 0, this.str.length)
+            );
         }
         return tree;
     }
@@ -254,14 +76,33 @@ class Parser {
     orExpression() {
         let expr = this.andExpression();
 
+        let flag = false;
+
         while (this.matchOperator(operators.OR)) {
             let operator = this.previous();
+            let curToken = this.current;
             operator.type = 'OPERATOR';
-            let right = this.andExpression();
-            if (right.type === types.WORD) {
-                this.error("Incomplete query after:\n", right.begin - 1);
+            let right;
+            try {
+                right = this.andExpression();
+                if (right !== null) {
+                    if (right.type === types.WORD) {
+                        right.type = types.TEXT;
+                    }
+                    expr = new Binary(expr, operator, right);
+                }
+                else {
+                    flag = true;
+                }
+            } catch (e) {
+                expr = new Binary(expr, operator, new Text(new Token('TEXT', this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.tokens[curToken].begin, this.tokens[this.current - 1].end)));
             }
-            expr = new Binary(expr, operator, right);
+        }
+
+        if (flag) {
+            this.current--;
         }
 
         return expr;
@@ -270,18 +111,38 @@ class Parser {
     andExpression() {
         let expr = this.andOperand();
 
+        if (expr === null) {
+            return expr;
+        }
+
+        if (expr.type === types.WORD) {
+            this.error('AndOperand can not be WORD\n', expr.begin);
+        }
+
+        let flag = false;
+
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
             operator.type = 'OPERATOR';
             let right = this.andOperand();
-            if (right.type === types.WORD) {
-                this.error("Incomplete query after: \n", right.begin - 1);
+            if (right !== null) {
+                if (right.type === types.WORD) {
+                    right.type = types.TEXT;
+                }
+                if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
+                    || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue
+                    || expr instanceof Grouping)) {
+                    this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
+                }
+                expr = new Binary(expr, operator, right);
             }
-            if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
-                || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue || expr instanceof Grouping)) {
-                this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
+            else {
+                flag = true;
             }
-            expr = new Binary(expr, operator, right);
+        }
+
+        if (flag) {
+            this.current--;
         }
 
         return expr;
@@ -290,30 +151,42 @@ class Parser {
     andOperand() {
         let expr = this.item();
 
+        if (!(expr instanceof Has || expr instanceof Sort || expr instanceof CategorizedFilter)) {
+            return expr;
+        }
+
         let exprCommaHelper = expr;
 
         while (this.match(',')) {
+            let cur = this.current - 1;
             let comma = this.previous();
             let right = this.item('value');
+            if (right === null)  {
+                this.current--;
+                return expr;
+            }
             this.current--;
-            if ((this.match(types.WORD, types.QUOTED_TEXT, types.COMPLEX_VALUE))) {
+            if ((this.match(types.WORD, types.QUOTED_TEXT, types.COMPLEX_VALUE, types.TEXT))) {
                 if (right instanceof PositiveSingleValue) {
-                    this.error("Unexpected PositiveSingleValue: \n", right.begin);
+                    this.current -= 3;
+                    return expr;
                 }
                 if (exprCommaHelper instanceof CategorizedFilter) {
                     expr.addAttributeFilter(right, comma);
                 }
-                else if (right instanceof ValueRange) {
-                    this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
-                }
                 else {
-                    right.type = 'Value';
+                    if (right instanceof ValueRange) {
+                        this.current -= 4;
+                        return expr;
+                    }
+                    right.type = right.type === 'TEXT' ? 'TEXT' : 'Value';
                     if (exprCommaHelper instanceof Has) {
                         expr.addAttribute(right, comma);
                     }
                     else if (exprCommaHelper instanceof Sort) {
                         if (right instanceof NegativeSingleValue) {
-                            this.error(exprCommaHelper.type + " can not have '" + right.type + "' value.\n", right.begin);
+                            this.current -= 3;
+                            return expr;
                         }
                         let order = this.tokens[this.current];
                         if (order.type === types.WORD) {
@@ -321,18 +194,20 @@ class Parser {
                                 expr.addValue(right, comma, order);
                                 this.current++;
                             }
+                            else {
+                                expr.addValue(right, comma);
+                                return expr;
+                            }
                         }
                         else {
                             expr.addValue(right, comma);
                         }
                     }
-                    else {
-                        this.error(expr.type + " does not support comma operator:\n", expr.right.begin);
-                    }
                 }
             }
             else {
-                this.error("Unexpected value after comma:\n", right.begin);
+                this.current = cur;
+                return expr;
             }
         }
 
@@ -342,103 +217,167 @@ class Parser {
     item() {
         let expr = this.unary(arguments[0] || 'key');
 
-        if (this.match(operators.COLON)) {
-            let operator = this.previous();
-            if (this.tokens[this.current].type === '-') {
-                let minus = this.advance();
-                if (expr.lexeme === 'sort by') {
-                    this.error("'"+ expr.lexeme + "' can't have minus symbol\n", minus.begin);
-                }
-                let right_1 = this.unary();
-                if (expr.lexeme === 'has') {
-                    expr = new Has(expr, operator, right_1, minus);
-                }
-                else if (this.match('..')) {
-                    let right = new ValueRange(right_1, this.previous(), this.unary());
-                    expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
-                }
-                else {
-                    expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
-                }
-            }
-            else if (this.tokens[this.current].type === '#') {
-                this.error("Unexpected PositiveSingleValue in 'value':\n", this.tokens[this.current].begin)
-            }
-            else {
-                let right_1 = this.unary();
-                if (this.match('..')) {
-                    let right = new ValueRange(right_1, this.previous(), this.unary());
-                    if (expr.lexeme === 'has' || expr.lexeme === 'sort by') {
-                        this.error("'" + expr.lexeme + "' can't have ValueArrange value\n", right_1.begin);
-                    }
-                    else {
-                        expr = new CategorizedFilter(new Attribute(expr), operator, right);
-                    }
-                } else {
-                    right_1.type = right_1.type !== 'QuotedText' ? 'Value' : right_1.type;
-                    if (expr.lexeme === 'has') {
-                        expr = new Has(expr, operator, right_1);
-                    }
-                    else if(expr.lexeme === 'sort by') {
-                        if (this.tokens[this.current].lexeme === 'asc' || this.tokens[this.current].lexeme === 'desc') {
-                            expr = new Sort(expr, operator, right_1, this.advance());
-                        }
-                        else {
-                            expr = new Sort(expr, operator, right_1);
-                        }
-                    }
-                    else {
-                        expr = new CategorizedFilter(new Attribute(expr), operator, right_1);
-                    }
-                }
-            }
+        if (expr === null) return null;
+
+        if (expr.type !== types.WORD && !(expr instanceof Unary || expr instanceof Grouping
+            || expr instanceof QuotedText)) {
+            expr.type = types.TEXT;
+            return expr;
         }
 
-        else if (expr instanceof QuotedText) {
-            return expr;
+        if (!(expr instanceof Unary)) {
+            if (this.match(operators.COLON)) {
+                let operator = this.previous();
+                if (this.tokens[this.current].type === '-') {
+                    let curToken = this.current;
+                    let minus = this.advance();
+                    let right_1 = this.unary();
+                    if (expr.lexeme === 'sort by') {
+                        this.current = curToken;
+                        return expr;
+                    }
+                    else if (expr.lexeme === 'has') {
+                        expr = new Has(expr, operator, right_1, minus);
+                    }
+                    else if (this.match('..')) {
+                        let right = new ValueRange(right_1, this.previous(), this.unary());
+                        expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
+                    }
+                    else {
+                        expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
+                    }
+                }
+                else if (this.tokens[this.current].type === '#') {
+                    return expr;
+                }
+                else if (!this.isAtEnd()){
+                    let right_1 = this.unary();
+                    if (right_1.type !== types.WORD && right_1.type !== types.COMPLEX_VALUE) {
+                        this.error('Unexpected Value\n', right_1.begin);
+                    }
+                    let flag = false;
+                    if (this.match('..')) {
+                        let operator_vr = this.previous();
+                        let curToken = this.current - 1;
+                        let right;
+                        if (!this.isAtEnd()) {
+                            let right_vr = this.unary();
+                            if (right_vr.type === types.WORD)
+                                right = new ValueRange(right_1, operator_vr, right_vr);
+                            else {
+                                this.current = curToken;
+                                if (expr.lexeme === 'sort by') {
+                                    return new Sort(expr, operator, right_1);
+                                }
+                                else if (expr.lexeme === 'has') {
+                                    return new Has(expr, operator, right_1);
+                                }
+                                else {
+                                    return new CategorizedFilter(new Attribute(expr), operator, right_1);
+                                }
+                            }
+                        }
+                        else {
+                            right = right_1;
+                            flag = true;
+                        }
+                        if (expr.lexeme === 'has') {
+                            this.current = curToken;
+                            return new Has(expr, operator, right_1);
+                        }
+                        else if (expr.lexeme === 'sort by') {
+                            this.current = curToken;
+                            return new Sort(expr, operator, right_1);
+                        }
+                        else {
+                            expr = new CategorizedFilter(new Attribute(expr), operator, right);
+                        }
+                        if (flag) {
+                            this.current = curToken;
+                            return expr;
+                        }
+                    } else {
+                        if (right_1.type !== types.TEXT) {
+                            right_1.type = right_1.type !== 'QuotedText' ? 'Value' : right_1.type;
+                        }
+                        if (expr.lexeme === 'has') {
+                            expr = new Has(expr, operator, right_1);
+                        }
+                        else if(expr.lexeme === 'sort by') {
+                            if (this.tokens[this.current].lexeme === 'asc' || this.tokens[this.current].lexeme === 'desc') {
+                                expr = new Sort(expr, operator, right_1, this.advance());
+                            }
+                            else {
+                                expr = new Sort(expr, operator, right_1);
+                            }
+                        }
+                        else {
+                            expr = new CategorizedFilter(new Attribute(expr), operator, right_1);
+                        }
+                    }
+                }
+                else {
+                    return new Text(new Token('TEXT', this.str.substring(expr.begin, operator.end),
+                        this.str.substring(expr.begin, operator.end), expr.begin, operator.end));
+                }
+            }
+
+            else if (expr instanceof QuotedText) {
+                return expr;
+            }
+
+            else if ('expr' in expr) {
+                return expr;
+            }
+
+            else if (this.isAtEnd()) {
+                return expr;
+            }
+
+            else if (this.match('..')) {
+                let curToken = this.current - 1;
+                let operator = this.previous();
+                let right_vr = this.unary();
+                if (right_vr !== null) {
+                    if (right_vr.type === types.WORD)
+                        return new ValueRange(expr, operator, right_vr);
+                    else {
+                        this.current = curToken;
+                        return expr;
+                    }
+                }
+                else {
+                    this.current = curToken;
+                }
+            }
         }
 
         else if ('operator' in expr) {
-            if (expr.operator.type !== '#' && expr.operator.type !== '-') {
-                this.error("Missing ':'\n", expr.end);
-            }
-
-            else if (expr.operator.type === '#') {
-                expr = new PositiveSingleValue(expr.operator, expr.right);
+            if (expr.operator.type === '#') {
+                if (expr.right !== null)
+                    expr = new PositiveSingleValue(expr.operator, expr.right);
+                else {
+                    expr = new Text(new Token('TEXT', this.str.substring(expr.operator.begin, expr.operator.end),
+                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin,
+                        expr.operator.end));
+                }
             }
 
             else if (expr.operator.type === '-') {
-                if (expr.right instanceof QuotedText) {
-                    expr = new NegativeText(expr.operator, expr.right);
+                if (expr.right !== null) {
+                    if (expr.right instanceof QuotedText) {
+                        expr = new NegativeText(expr.operator, expr.right);
+                    }
+                    else {
+                        expr = new NegativeSingleValue(expr.operator, expr.right);
+                    }
                 }
                 else {
-                    expr = new NegativeSingleValue(expr.operator, expr.right);
+                    expr = new Text(new Token('TEXT', this.str.substring(expr.operator.begin, expr.operator.end),
+                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin,
+                        expr.operator.end));
                 }
             }
-
-            else {
-                this.error("Unexpected operator:\n", expr.operator.begin);
-            }
-        }
-
-        else if ('expr' in expr) {
-            return expr;
-        }
-
-        else if (this.isAtEnd()) {
-            return expr;
-        }
-
-        else if (this.match('..')) {
-            return new ValueRange(expr, this.previous(), this.unary())
-        }
-
-        else if (arguments[0] === 'value') {
-            return expr;
-        }
-
-        else {
-            this.error("Unexpected word:\n", expr.begin);
         }
 
         return expr;
@@ -449,10 +388,22 @@ class Parser {
             let operator = this.previous();
             if (arguments[0] === 'key') {
                 let right = this.primary();
+                if (right !== null) {
+                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
+                        this.current--;
+                        return  operator;
+                    }
+                }
                 return new Unary(operator, right);
             }
             else {
                 let right = this.item('value');
+                if (right !== null) {
+                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
+                        this.current--;
+                        return  operator;
+                    }
+                }
                 return new Unary(operator, right);
             }
         }
@@ -475,8 +426,8 @@ class Parser {
 
             while (this.match(types.WORD)) {
                 if (this.previous().lexeme.toUpperCase() in operators) {
-                    this.error("Operator '" + this.previous().lexeme.toUpperCase() + "' can not be key.\n",
-                        this.previous().begin);
+                    this.current--;
+                    break;
                 }
                 attr.lexeme += ' ' + this.previous().lexeme;
                 attr.literal += ' ' + this.previous().literal;
@@ -488,7 +439,7 @@ class Parser {
         else if (this.match(types.WORD, types.COMPLEX_VALUE)) {
             let attr = this.previous();
             if (attr.lexeme.toUpperCase() in operators) {
-                this.error("Operator '" + attr.lexeme.toUpperCase() + "' can not be value.\n", attr.begin);
+                attr.type = 'TEXT';
             }
             if (attr.lexeme === 'sort') {
                 let by = this.advance();
@@ -498,16 +449,19 @@ class Parser {
                     attr.end = by.end;
                 }
             }
-            return this.previous();
+            return attr;
         }
 
         else if (this.match('"')) {
             return new QuotedText(this.previous(), this.advance(), this.advance());
         }
+        else if (this.match(types.TEXT)) {
+            return new Text(this.previous());
+        }
 
         if (this.match(operators.LEFT_PAREN)) {
             let left = this.previous();
-            let expr = this.orExpression();
+            let expr = this.getTree();
             if (this.check(operators.RIGHT_PAREN)) this.advance();
             else {
                 this.error("Missing ')' after expression:\n", this.str.length);
@@ -516,13 +470,16 @@ class Parser {
             return new Grouping(left, expr, right);
         }
 
+        if (this.tokens.type !== types.WORD) {
+            return this.advance();
+        }
+
         if (this.tokens[this.current - 1].type !== operators.LEFT_PAREN) {
-            this.error("Expect AndOperand after '" + this.tokens[this.current - 1].lexeme + "'\n",
-                this.tokens[this.current - 1].end);
+            return this.advance();
         }
 
         else {
-            this.error("Expect OrExpression after '" + this.tokens[this.current - 1].lexeme + "'\n", this.str.length);
+            return null;
         }
     }
 
@@ -559,7 +516,10 @@ class Parser {
     }
 
     advance() {
-        if (!this.isAtEnd()) this.current++;
+        if (!this.isAtEnd())
+            this.current++;
+        else
+            return null;
         return this.previous();
     }
 
@@ -581,9 +541,9 @@ class Parser {
 }
 
 // try {
-//     let t = new Parser('(a:v)');
+//     let t = new Parser('a:c .. #');
 //     let res = t.parse();
-//     console.log(res.left.begin);
+//     console.log(res);
 // } catch (e) {
 //     console.log(e);
 // }

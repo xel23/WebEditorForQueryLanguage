@@ -1,5 +1,4 @@
 const operators = require('./const/operators');
-const errorEx = require('./exceptions/syntaxException');
 const Token = require('./token');
 
 class Lexer {
@@ -26,10 +25,10 @@ class Lexer {
             case /[(]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
-                        this.error("Unexpected token '" + this.tokens[this.tokens.length - 1].type +"':\n", this.tokens[this.tokens.length - 1].begin);
+                        this.identifier();
                     }
                     if (this.str[this.current - 2] !== ' ' && this.str[this.current - 1] !== '(') {
-                        this.error("Unexpected token:\n", this.current);
+                        this.identifier();
                     }
                 }
                 this.addToken(operators.LEFT_PAREN, '(', this.start, this.current); break;
@@ -43,7 +42,7 @@ class Lexer {
             case /[\-]/.test(c):  {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
-                        this.error("Unexpected token '" + this.str[this.start] + "':\n", this.start);
+                        this.identifier();
                     }
                 }
                 this.addToken('-', '-', this.start, this.current);
@@ -51,7 +50,7 @@ class Lexer {
             case /[#]/.test(c): {
                 if (this.current - 1 > 0) {
                     if (this.tokens[this.tokens.length - 1].type === '#' || this.tokens[this.tokens.length - 1].type === '-') {
-                        this.error("Unexpected token '" + this.str[this.start] +"':\n", this.start);
+                        this.identifier();
                     }
                 }
                 this.addToken('#', '#', this.start, this.current);
@@ -65,26 +64,22 @@ class Lexer {
             }
             case /[:]/.test(c): this.addToken(':', ':', this.start, this.current); break;
             case /[.]/.test(c): {
-                if (this.str[this.current] !== '.') {
-                    this.error("Unexpected token:\n", this.current - 1);
-                } else {
+                if (this.str[this.current] === '.') {
                     this.advance();
                     this.addToken('..', '..', this.start, this.current);
                 }
+                else {
+                    this.identifier();
+                }
                 break;
             }
-            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break; // ->>>
+            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break;
             case /[\s]/.test(c): {
                 this.tokens[this.tokens.length - 1].end++;
                 break;
             }
             default: {
-                if (this.isAlphaNumeric(c)) {
-                    this.identifier();
-                }
-                else {
-                    this.error("Unexpected token:\n", this.current - 1);
-                }
+                this.identifier();
             }
         }
     }
@@ -132,10 +127,6 @@ class Lexer {
             this.advance();
         }
 
-        if (this.isAtEnd()) {
-            this.error("SyntaxError: missing '}':\n", this.current);
-        }
-
         this.advance();
         return this.str.substring(this.start + 1, this.current - 1);
     }
@@ -143,10 +134,6 @@ class Lexer {
     stringQuote() {
         while (this.peek() !== '"' && !this.isAtEnd()) {
             this.advance();
-        }
-
-        if (this.isAtEnd()) {
-            this.error("SyntaxError: missing '\"':\n", this.current);
         }
 
         this.advance();
@@ -157,39 +144,48 @@ class Lexer {
         return /[a-zA-Z_\-*?.]/.test(c);
     }
 
-    identifier() {
-        while (this.isAlphaNumeric(this.peek())) this.advance();
-
-        while(this.str[this.current] === ' ') {
-            this.advance();
+    isText(c) {
+        if (c !== undefined && c !== '\0') {
+            return !(/[\s:,(){}\-#."*?a-zA-Z_]/.test(c));
         }
+        return false;
+    }
 
-        let curWord = this.str.substring(this.start, this.current);
+    identifier() {
+        if (this.isText(this.str[this.current - 1])) {
+            while (this.isText(this.peek()) || this.isAlphaNumeric(this.peek())) this.advance();
 
-        if (curWord.indexOf('..') !== -1) {
-            let pos = this.start + curWord.indexOf('..');
-            this.addToken('WORD', this.str.substring(this.start, pos)
-                .replace(/ /g, ''), this.start, pos);
-            let i = 0;
-            while (this.str[pos + 2 + i] === ' ') i++;
-            this.addToken('..', '..', pos, pos + 2 + i);
-            if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
-                this.addToken('WORD', this.str.substring(pos + 2, this.current)
-                    .replace(/ /g, ''), pos + 2, this.current);
-            }
+            this.addToken('TEXT', this.str.substring(this.start, this.current), this.start, this.current);
         }
         else {
-            this.addToken('WORD', this.str.substring(this.start, this.current)
-                .replace(/ /g, ''), this.start, this.current);
+            while (this.isAlphaNumeric(this.peek())) this.advance();
+            while(/[\s]/.test(this.str[this.current])) {
+                this.advance();
+            }
+
+            let curWord = this.str.substring(this.start, this.current);
+
+            if (curWord.indexOf('..') !== -1) {
+                let pos = this.start + curWord.indexOf('..');
+                this.addToken('WORD', this.str.substring(this.start, pos)
+                    .replace(/[\s]/g, ''), this.start, pos);
+                let i = 0;
+                while (this.str[pos + 2 + i] === ' ') i++;
+                this.addToken('..', '..', pos, pos + 2 + i);
+                if (this.str.substring(pos + 2, this.current).replace(/[\s]/g, '') !== '') {
+                    this.addToken('WORD', this.str.substring(pos + 2, this.current)
+                        .replace(/[\s]/g, ''), pos + 2, this.current);
+                }
+            }
+            else {
+                this.addToken('WORD', this.str.substring(this.start, this.current)
+                    .replace(/[\s]/g, ''), this.start, this.current);
+            }
         }
     }
 
     isAlphaNumeric(c) {
         return this.isDigit(c) || this.isAlpha(c);
-    }
-
-    error(message, n) {
-        new errorEx(message, n, this.str);
     }
 }
 

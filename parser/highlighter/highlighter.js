@@ -1,5 +1,11 @@
 const Unary = require('../general/Unary');
+const Binary = require('../general/Binary');
+const Has = require('../general/Has');
+const CategorizedFilter = require('../general/CategorizedFilter');
+const Sort = require('../general/Sort');
 const Grouping = require('../general/Grouping');
+const PositiveSingleValue = require('../general/PositiveSingleValue');
+const NegativeSingleValue = require('../general/NegativeSingleValue');
 
 class Highlighter {
     constructor(obj, str) {
@@ -10,8 +16,16 @@ class Highlighter {
         return '<span class="' + type + '">' + text +'</span>';
     }
 
+    divWrapper() {
+        return arguments[0] !== undefined ? '<div id="treeWrapper" class="' + arguments[0] + '">' : '</div>';
+    }
+
     traverse(obj, str) {
         let resString = "";
+        if (obj instanceof Binary || obj instanceof Grouping || obj instanceof Has || obj instanceof Sort
+            || obj instanceof CategorizedFilter || obj instanceof NegativeSingleValue || obj instanceof PositiveSingleValue) {
+            resString += this.divWrapper(obj.type);
+        }
         if (obj instanceof Grouping) {
             resString += this.wrapper(str.substring(obj.left.begin, obj.left.end), 'Parentheses');
             resString += this.traverse(obj.expr, str);
@@ -36,7 +50,8 @@ class Highlighter {
                             case 'key':
                             case 'Attribute':
                             case 'Value':
-                            case 'ValueRange': {
+                            case 'ValueRange':
+                            case 'TEXT':  {
                                 resString += this.wrapper(str.substring(obj.begin, obj.end), obj.type);
                                 break;
                             }
@@ -89,6 +104,10 @@ class Highlighter {
                     }
                 }
             }
+        }
+        if (obj instanceof Binary || obj instanceof Grouping || obj instanceof Has || obj instanceof Sort
+            || obj instanceof CategorizedFilter || obj instanceof NegativeSingleValue || obj instanceof PositiveSingleValue) {
+            resString += this.divWrapper();
         }
         return resString;
     }

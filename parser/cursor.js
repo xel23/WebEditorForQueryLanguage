@@ -27,21 +27,18 @@ class Cursor {
     set position(position) {
         let curNode = this.field;
         let curPos = 0, i = -1;
-        while (curPos < position) {
+        while (curPos < position && curNode.nodeType !== 3) {
             i++;
             if (curNode.childNodes[i] !== null) {
                 curPos += curNode.childNodes[i].textContent.length;
-            }
-            else {
-                curNode = curNode.childNodes[i];
-                if (curNode.childNodes.length === 0)  {
-                    break;
+                if (curPos >= position) {
+                    curNode = curNode.childNodes[i];
+                    curPos -= curNode.textContent.length;
+                    i = -1;
                 }
             }
         }
-        if (i !== -1) curNode = curNode.childNodes[i];
-        document.getSelection().collapse(curNode.firstChild !== undefined && curNode.firstChild !== null ? curNode.firstChild : curNode,
-            position - (curPos - curNode.textContent.length));
+        document.getSelection().collapse(curNode, position - curPos);
     }
 }
 

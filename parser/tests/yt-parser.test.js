@@ -155,6 +155,9 @@ class AttributeFilter {
         }
         else {
             this.type = value.type === 'WORD' ? 'Value' : value.type;
+            if (value.type === 'TEXT') {
+                this.type = 'TEXT';
+            }
             this.lexeme = value.lexeme;
             this.literal = value.literal;
             this.begin = value.begin;
@@ -165,7 +168,7 @@ class AttributeFilter {
 
 class Attribute {
     constructor(value) {
-        this.type = 'Attribute';
+        this.type = value.type === 'TEXT' ? 'TEXT' : 'Attribute';
         this.lexeme = value.lexeme;
         this.literal = value.literal;
         this.begin = value.begin;
@@ -237,7 +240,10 @@ class CategorizedFilter extends TermItem {
 
 class SortAttribute {
     constructor(value) {
-        let word = value.literal.split(' ');
+        let word = value;
+        if (value.type !== 'TEXT') {
+            word = value.literal.split(' ');
+        }
         if (word.length > 1) {
             this.type = value.type;
             this.lexeme = word[0];
@@ -285,6 +291,14 @@ class Sort extends TermItem {
         else {
             this.value.push(new SortAttribute(token));
         }
+    }
+}
+
+class Text extends TermItem {
+    constructor(token) {
+        super('TEXT', token.begin, token.end);
+        this.lexeme = token.lexeme;
+        this.literal = token.literal;
     }
 }
 
@@ -813,6 +827,230 @@ class Sort extends TermItem {
                     new Token('WORD', 't', 't', 6, 7),
                     new Token('..', '..', '..', 7, 10),
                     new Token('WORD', 'm', 'm', 10, 11)
+                )
+            )},
+
+    {input: 'sort by: aa .. bb', output:
+            new Binary(
+                new Binary(
+                    new Sort(
+                        new Token('WORD', 'sort by', 'sort by', 0, 7),
+                        new Token(':', ':', ':', 7, 9),
+                        new Token('WORD', 'aa', 'aa', 9, 12)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', '.. ', '.. ', 12, 15)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'bb', 'bb', 15, 17)
+                )
+            )},
+
+    {input: 'has: aa .. bb', output:
+            new Binary(
+                new Binary(
+                    new Has(
+                        new Token('WORD', 'has', 'has', 0, 3),
+                        new Token(':', ':', ':', 3, 5),
+                        new Token('WORD', 'aa', 'aa', 5, 8)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', '.. ', '.. ', 8, 11)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'bb', 'bb', 11, 13)
+                )
+            )},
+
+    {input: 'a: #d', output:
+            new Binary(
+                new Text(new Token('TEXT', 'a: ', 'a: ', 0, 3)),
+                new Token('OPERATOR' ,'and', 'and'),
+                new PositiveSingleValue(
+                    new Token('#', '#', '#', 3, 4),
+                    new Token('WORD', 'd', 'd', 4, 5)
+                )
+            )},
+
+    {input: 'sort by: -d', output:
+        new Binary(
+            new Text(new Token('TEXT', 'sort by: ', 'sort by: ', 0, 9)),
+            new Token('OPERATOR' ,'and', 'and'),
+            new NegativeSingleValue(
+                new Token('-', '-', '-', 9, 10),
+                new Token('WORD', 'd', 'd', 10, 11)
+            )
+        )},
+
+    {input: 'sort by: #d', output:
+            new Binary(
+                new Text(new Token('TEXT', 'sort by: ', 'sort by: ', 0, 9)),
+                new Token('OPERATOR' ,'and', 'and'),
+                new PositiveSingleValue(
+                    new Token('#', '#', '#', 9, 10),
+                    new Token('WORD', 'd', 'd', 10, 11)
+                )
+            )},
+
+    {input: 'has: #f', output:
+            new Binary(
+                new Text(new Token('TEXT', 'has: ', 'has: ', 0, 5)),
+                new Token('OPERATOR' ,'and', 'and'),
+                new PositiveSingleValue(
+                    new Token('#', '#', '#', 5, 6),
+                    new Token('WORD', 'f', 'f', 6, 7)
+                )
+            )},
+
+    {input: 'has: a, b .. v', output:
+            new Binary(
+                new Binary(
+                    new Has(
+                        new Token('WORD', 'has', 'has', 0, 3),
+                        new Token(':', ':', ':', 3, 5),
+                        new Token('WORD', 'a', 'a', 5, 6)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(new Token('TEXT', ', ', ', ', 6, 8))
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(new Token('TEXT', 'b .. v', 'b .. v', 8, 14))
+            )},
+
+    {input: 'sort by: a, b .', output:
+            new Binary(
+                new Sort(
+                    new Token('WORD', 'sort by', 'sort by', 0, 7),
+                    new Token(':', ':', ':', 7, 9),
+                    [
+                        new Token('Value', 'a', 'a', 9, 10),
+                        new Token(',',',',',', 10, 12),
+                        new Token('Value', 'b', 'b', 12, 14)
+                    ]
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(new Token('TEXT', '.', '.', 14, 15))
+            )},
+
+    {input: 'has: t ..', output:
+            new Binary(
+                new Has(
+                    new Token('WORD', 'has', 'has', 0, 3),
+                    new Token(':', ':', ':', 3, 5),
+                    new Token('WORD', 't', 't', 5, 7)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(new Token('TEXT', '..', '..', 7, 9))
+            )},
+
+    {input: 'test: t..', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 6),
+                    new Token('WORD', 't', 't', 6, 7)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', '..', '..', 7, 9)
+                )
+            )},
+
+    {input: 'test: t or', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 6),
+                    new Token('WORD', 't', 't', 6, 8)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'or', 'or', 8, 10)
+                )
+            )},
+
+    {input: 'test: t or k', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'test', 'test', 0, 4)
+                    ),
+                    new Token(':', ':', ':', 4, 6),
+                    new Token('WORD', 't', 't', 6, 8)
+                ),
+                new Token('OPERATOR', 'or', 'or', 8, 11),
+                new Text(
+                    new Token('TEXT', 'k', 'k', 11, 12)
+                )
+            )},
+
+    {input: 'a:c .. #', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'a', 'a', 0, 1)
+                        ),
+                        new Token(':', ':', ':', 1, 2),
+                        new Token('WORD', 'c', 'c', 2, 4)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', '.. ', '.. ', 4, 7)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', '#', '#', 7, 8)
+                )
+            )},
+
+    {input: ';:v', output:
+            new Binary(
+                new Binary(
+                    new Text(
+                        new Token('TEXT', ';', ';', 0, 1)
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', ':', ':', 1, 2)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', 'v', 'v', 2, 3)
+                )
+            )},
+
+    {input: '#,', output:
+            new Binary(
+                new Text(
+                    new Token('TEXT', '#', '#', 0, 1)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', ',',',', 1, 2)
+                )
+            )},
+
+    {input: '-,', output:
+            new Binary(
+                new Text(
+                    new Token('TEXT', '-', '-', 0, 1)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', ',',',', 1, 2)
                 )
             )},
 
