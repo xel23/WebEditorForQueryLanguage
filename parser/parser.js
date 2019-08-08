@@ -95,8 +95,9 @@ class Parser {
                     flag = true;
                 }
             } catch (e) {
-                expr = new Binary(expr, operator, new Text(new Token('TEXT', this.str.substring(this.tokens[curToken].begin, this.tokens[this.current - 1].end),
-                    this.str.substring(this.tokens[curToken].begin, this.tokens[this.current - 1].end), this.tokens[curToken].begin, this.tokens[this.current - 1].end)));
+                expr = new Binary(expr, operator, new Text(new Token('TEXT', this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.tokens[curToken].begin, this.tokens[this.current - 1].end)));
             }
         }
 
@@ -129,7 +130,8 @@ class Parser {
                     right.type = types.TEXT;
                 }
                 if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
-                    || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue || expr instanceof Grouping)) {
+                    || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue
+                    || expr instanceof Grouping)) {
                     this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
                 }
                 expr = new Binary(expr, operator, right);
@@ -217,7 +219,8 @@ class Parser {
 
         if (expr === null) return null;
 
-        if (expr.type !== types.WORD && !(expr instanceof Unary || expr instanceof Grouping || expr instanceof QuotedText)) {
+        if (expr.type !== types.WORD && !(expr instanceof Unary || expr instanceof Grouping
+            || expr instanceof QuotedText)) {
             expr.type = types.TEXT;
             return expr;
         }
@@ -349,15 +352,14 @@ class Parser {
             }
         }
 
-
-
         else if ('operator' in expr) {
             if (expr.operator.type === '#') {
                 if (expr.right !== null)
                     expr = new PositiveSingleValue(expr.operator, expr.right);
                 else {
                     expr = new Text(new Token('TEXT', this.str.substring(expr.operator.begin, expr.operator.end),
-                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin, expr.operator.end));
+                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin,
+                        expr.operator.end));
                 }
             }
 
@@ -372,7 +374,8 @@ class Parser {
                 }
                 else {
                     expr = new Text(new Token('TEXT', this.str.substring(expr.operator.begin, expr.operator.end),
-                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin, expr.operator.end));
+                        this.str.substring(expr.operator.begin, expr.operator.end), expr.operator.begin,
+                        expr.operator.end));
                 }
             }
         }
@@ -537,12 +540,12 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser('a:c .. #');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
+// try {
+//     let t = new Parser('a:c .. #');
+//     let res = t.parse();
+//     console.log(res);
+// } catch (e) {
+//     console.log(e);
+// }
 
 module.exports = Parser;
