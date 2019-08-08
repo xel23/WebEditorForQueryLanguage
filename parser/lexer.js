@@ -1,5 +1,4 @@
 const operators = require('./const/operators');
-const errorEx = require('./exceptions/syntaxException');
 const Token = require('./token');
 
 class Lexer {
@@ -128,10 +127,6 @@ class Lexer {
             this.advance();
         }
 
-        // if (this.isAtEnd()) {
-        //     this.error("SyntaxError: missing '}':\n", this.current);
-        // }
-
         this.advance();
         return this.str.substring(this.start + 1, this.current - 1);
     }
@@ -140,10 +135,6 @@ class Lexer {
         while (this.peek() !== '"' && !this.isAtEnd()) {
             this.advance();
         }
-
-        // if (this.isAtEnd()) {
-        //     this.error("SyntaxError: missing '\"':\n", this.current);
-        // }
 
         this.advance();
         return this.str.substring(this.start + 1, this.current - 1);
@@ -177,18 +168,18 @@ class Lexer {
             if (curWord.indexOf('..') !== -1) {
                 let pos = this.start + curWord.indexOf('..');
                 this.addToken('WORD', this.str.substring(this.start, pos)
-                    .replace(/ /g, ''), this.start, pos);
+                    .replace(/[\s]/g, ''), this.start, pos);
                 let i = 0;
                 while (this.str[pos + 2 + i] === ' ') i++;
                 this.addToken('..', '..', pos, pos + 2 + i);
-                if (this.str.substring(pos + 2, this.current).replace(/ /g, '') !== '') {
+                if (this.str.substring(pos + 2, this.current).replace(/[\s]/g, '') !== '') {
                     this.addToken('WORD', this.str.substring(pos + 2, this.current)
-                        .replace(/ /g, ''), pos + 2, this.current);
+                        .replace(/[\s]/g, ''), pos + 2, this.current);
                 }
             }
             else {
                 this.addToken('WORD', this.str.substring(this.start, this.current)
-                    .replace(/ /g, ''), this.start, this.current);
+                    .replace(/[\s]/g, ''), this.start, this.current);
             }
         }
     }
@@ -196,10 +187,6 @@ class Lexer {
     isAlphaNumeric(c) {
         return this.isDigit(c) || this.isAlpha(c);
     }
-
-    // error(message, n) {
-    //     new errorEx(message, n, this.str);
-    // }
 }
 
 module.exports = Lexer;

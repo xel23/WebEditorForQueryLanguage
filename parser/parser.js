@@ -6,235 +6,16 @@ const Token = require('./token');
 const Binary = require('./general/Binary');
 const Unary = require('./general/Unary');
 const Grouping = require('./general/Grouping');
-
-class TermItem {
-    constructor (type, being, end) {
-        this.type = type;
-        this.begin = being;
-        this.end = end;
-    }
-}
-
-class QuotedText extends TermItem {
-    constructor(leftQuote, text, rightQuote) {
-        super('QuotedText', leftQuote.begin, rightQuote.end);
-        this.leftQuote = leftQuote;
-        this.lexeme = text.lexeme;
-        this.literal = text.literal;
-        this.begin = leftQuote.begin;
-        this.end = rightQuote.end;
-        this.rightQuote = rightQuote;
-    }
-}
-
-class NegativeText extends TermItem {
-    constructor(minus, qt) {
-        super('NegativeText', minus.begin, qt.end);
-        this.minus = minus;
-        this.text = qt;
-    }
-}
-
-class PositiveSingleValue extends TermItem {
-    constructor(lat, value) {
-        super('PositiveSingleValue', value.begin, value.end);
-        this.operator = lat;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-    }
-}
-
-class NegativeSingleValue extends TermItem {
-    constructor(minus, value) {
-        super('NegativeSingleValue', value.begin, value.end);
-        this.minus = minus;
-        if (value instanceof ValueRange) {
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else {
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-        }
-    }
-}
-
-class ValueRange {
-    constructor(leftVal, operator, rightVal) {
-        this.type = 'ValueRange';
-        this.leftVal = leftVal;
-        this.operator = operator;
-        this.rightVal = rightVal;
-        this.begin = leftVal.begin;
-        this.end = rightVal.end;
-    }
-}
-
-class AttributeFilter {
-    constructor(value) {
-        if (value instanceof ValueRange) {
-            this.type = 'ValueRange';
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else if (value instanceof NegativeSingleValue) {
-            this.type = value.type;
-            this.operator = value.minus;
-            if (value.left_lexeme !== undefined) {
-                this.left_lexeme = value.left_lexeme;
-                this.left_lexeme_begin = value.left_lexeme_begin;
-                this.left_lexeme_end = value.left_lexeme_end;
-                this.left_literal = value.left_literal;
-                this.right_lexeme = value.right_lexeme;
-                this.right_lexeme_begin = value.right_lexeme_begin;
-                this.right_lexeme_end = value.right_lexeme_end;
-                this.right_literal = value.right_literal;
-                this.vr_operator = value.vr_operator;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-            else {
-                this.lexeme = value.lexeme;
-                this.literal = value.literal;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-        }
-        else {
-            this.type = value.type === 'WORD' ? 'Value' : value.type;
-            if (value.type === types.TEXT) {
-                this.type = types.TEXT;
-            }
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-            this.begin = value.begin;
-            this.end = value.end;
-        }
-    }
-}
-
-class Attribute {
-    constructor(value) {
-        this.type = value.type === 'TEXT'? 'TEXT' : 'Attribute';
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this.begin = value.begin;
-        this.end = value.end;
-        if (value instanceof NegativeSingleValue) {
-            this.begin = value.minus.end;
-            this.operator = value.minus;
-        }
-        if (arguments[1] !== undefined) this.operator = arguments[1];
-    }
-}
-
-class Has extends TermItem {
-    constructor(has, operator, value) {
-        super('Has', has.begin, value.end);
-        this.key = has;
-        this.key.type = 'key';
-        this.operator = operator;
-        this.value = [];
-        if (arguments[3] !== undefined) {
-            this.value.push(new Attribute(value, arguments[3]));
-        }
-        else {
-            this.value.push(new Attribute(value));
-        }
-    }
-
-    addAttribute(token, comma) {
-        this.value.push(comma);
-        this.value.push(new Attribute(token));
-        this.end = token.end;
-    }
-}
-
-class CategorizedFilter extends TermItem {
-    constructor(attribute, operator, attributeFilter) {
-        super('CategorizedFilter', attribute.begin, attributeFilter instanceof ValueRange ? attributeFilter.rightVal.end : attributeFilter.end);
-        this.attribute = attribute;
-        this.operator = operator;
-        this.attributeFilter = [];
-
-        this.attributeFilter.push(new AttributeFilter(attributeFilter));
-    }
-
-    addAttributeFilter(token, comma) {
-        this.end = token instanceof ValueRange ? token.rightVal.end : token.end;
-
-        this.attributeFilter.push(comma);
-        this.attributeFilter.push(new AttributeFilter(token));
-    }
-}
-
-class SortAttribute {
-    constructor(value) {
-        this.type = value.type;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this.begin = value.begin;
-        this.end = value.end;
-        if (arguments[1] !== undefined) {
-            this.order = arguments[1];
-        }
-    }
-}
-
-class Sort extends TermItem {
-    constructor(sortBy, operator, value) {
-        super('Sort', sortBy.begin, value.end);
-        this.key = sortBy;
-        this.key.type = 'key';
-        this.operator = operator;
-        this.value = [];
-        if (arguments[3] !== undefined) {
-            this.value.push(new SortAttribute(value, arguments[3]));
-            this.end = arguments[3].end;
-        }
-        else {
-            this.value.push(new SortAttribute(value));
-        }
-    }
-
-    addValue(token, comma) {
-        this.value.push(comma);
-        if (arguments[2] !== undefined) {
-            this.value.push(new SortAttribute(token, arguments[2]));
-            this.end = arguments[2].end;
-        }
-        else {
-            this.value.push(new SortAttribute(token));
-            this.end = token.end;
-        }
-    }
-}
-
-class Text extends TermItem {
-    constructor(token) {
-        super('TEXT', token.begin, token.end);
-        this.lexeme = token.lexeme;
-        this.literal = token.literal;
-    }
-}
+const Has = require('./general/Has');
+const QuotedText = require('./general/QuotedText');
+const NegativeText = require('./general/NegativeText');
+const PositiveSingleValue = require('./general/PositiveSingleValue');
+const NegativeSingleValue = require('./general/NegativeSingleValue');
+const ValueRange = require('./general/ValueRange');
+const CategorizedFilter = require('./general/CategorizedFilter');
+const Sort = require('./general/Sort');
+const Text = require('./general/Text');
+const Attribute = require('./general/Attribute');
 
 
 class Parser {
@@ -744,9 +525,8 @@ class Parser {
     }
 }
 
-const hl = require('./highlighter/highlighter');
 try {
-    let t = new Parser(':v');
+    let t = new Parser('a:b and b:d');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -754,3 +534,5 @@ try {
 }
 
 module.exports = Parser;
+
+// #,
