@@ -385,10 +385,22 @@ class Parser {
             let operator = this.previous();
             if (arguments[0] === 'key') {
                 let right = this.primary();
+                if (right !== null) {
+                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
+                        this.current--;
+                        return  operator;
+                    }
+                }
                 return new Unary(operator, right);
             }
             else {
                 let right = this.item('value');
+                if (right !== null) {
+                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
+                        this.current--;
+                        return  operator;
+                    }
+                }
                 return new Unary(operator, right);
             }
         }
@@ -526,7 +538,7 @@ class Parser {
 }
 
 try {
-    let t = new Parser('a:b and b:d');
+    let t = new Parser('a:c .. #');
     let res = t.parse();
     console.log(res);
 } catch (e) {
@@ -534,5 +546,3 @@ try {
 }
 
 module.exports = Parser;
-
-// #,

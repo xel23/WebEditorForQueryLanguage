@@ -4,6 +4,8 @@ const Has = require('../general/Has');
 const CategorizedFilter = require('../general/CategorizedFilter');
 const Sort = require('../general/Sort');
 const Grouping = require('../general/Grouping');
+const PositiveSingleValue = require('../general/PositiveSingleValue');
+const NegativeSingleValue = require('../general/NegativeSingleValue');
 
 class Highlighter {
     constructor(obj, str) {
@@ -21,7 +23,7 @@ class Highlighter {
     traverse(obj, str) {
         let resString = "";
         if (obj instanceof Binary || obj instanceof Grouping || obj instanceof Has || obj instanceof Sort
-            || obj instanceof CategorizedFilter) {
+            || obj instanceof CategorizedFilter || obj instanceof NegativeSingleValue || obj instanceof PositiveSingleValue) {
             resString += this.divWrapper(obj.type);
         }
         if (obj instanceof Grouping) {
@@ -104,7 +106,7 @@ class Highlighter {
             }
         }
         if (obj instanceof Binary || obj instanceof Grouping || obj instanceof Has || obj instanceof Sort
-            || obj instanceof CategorizedFilter) {
+            || obj instanceof CategorizedFilter || obj instanceof NegativeSingleValue || obj instanceof PositiveSingleValue) {
             resString += this.divWrapper();
         }
         return resString;
