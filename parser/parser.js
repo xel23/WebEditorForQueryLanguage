@@ -441,14 +441,6 @@ class Parser {
             if (attr.lexeme.toUpperCase() in operators) {
                 attr.type = 'TEXT';
             }
-            if (attr.lexeme === 'sort') {
-                let by = this.advance();
-                if (by.lexeme === 'by') {
-                    attr.lexeme += ' ' + by.lexeme;
-                    attr.literal += ' ' + by.literal;
-                    attr.end = by.end;
-                }
-            }
             return attr;
         }
 
@@ -540,12 +532,12 @@ class Parser {
     }
 }
 
-// try {
-//     let t = new Parser('a:c .. #');
-//     let res = t.parse();
-//     console.log(res);
-// } catch (e) {
-//     console.log(e);
-// }
+try {
+    let t = new Parser(' sort by:c');
+    let res = t.parse();
+    console.log(res);
+} catch (e) {
+    console.log(e);
+}
 
 module.exports = Parser;

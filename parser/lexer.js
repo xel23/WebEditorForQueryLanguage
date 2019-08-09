@@ -75,7 +75,10 @@ class Lexer {
             }
             case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break;
             case /[\s]/.test(c): {
-                this.tokens[this.tokens.length - 1].end++;
+                if (this.tokens.length === 0)
+                    break;
+                else
+                    this.tokens[this.tokens.length - 1].end++;
                 break;
             }
             default: {
