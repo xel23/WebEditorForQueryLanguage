@@ -14,4 +14,4 @@ deploy:
   local_dir: ./
   verbose: true
   on:
-    branch: yt_parser
+    branch: master
