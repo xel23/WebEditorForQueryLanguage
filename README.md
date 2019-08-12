@@ -1,1 +1,2 @@
-Web editor for query language.
+Web editor for YouTrack query language on frontend.
+-
