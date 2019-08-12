@@ -3,13 +3,13 @@ node_js:
   - "node"
 cache:
   directories:
-    - node_modules
+  - node_modules
 script:
   - npm run build
 deploy:
   provider: pages
   skip_cleanup: true
-  github_token: 68699db4524262d56768ad197978d3f17451e14b
+  github_token: $GITHUB_TOKEN
   local_dir: build
   on:
     branch: yt_parser
