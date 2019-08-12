@@ -532,12 +532,4 @@ class Parser {
     }
 }
 
-try {
-    let t = new Parser(' sort by:c');
-    let res = t.parse();
-    console.log(res);
-} catch (e) {
-    console.log(e);
-}
-
 module.exports = Parser;
