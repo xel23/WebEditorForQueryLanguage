@@ -37,7 +37,7 @@ class Parser {
         try {
             tree = this.getTree();
         } catch (e) {
-            console.log(e.toString());
+            // console.log(e.toString());
             tree = new Text(new Token('TEXT', this.str.substring(0, this.tokens[this.current - 1].end),
                 this.str.substring(0, this.tokens[this.current - 1].end), 0, this.tokens[this.current - 1].end));
         }
