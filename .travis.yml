@@ -12,5 +12,6 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   local_dir: build
+  verbose: true
   on:
-    branch: master
+    branch: yt_parser
