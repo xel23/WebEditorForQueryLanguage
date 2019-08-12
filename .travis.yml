@@ -9,7 +9,7 @@ script:
 deploy:
   provider: pages
   skip_cleanup: true
-  github_token: 673e7144cca2123d0ca5264681db2408eebb4983
+  github_token: 09f8d4a4bada0409735e1182a607c55af45052c4
   local_dir: build
   on:
     branch: yt_parser
