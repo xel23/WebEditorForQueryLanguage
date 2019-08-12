@@ -1,4 +1,4 @@
-![](//travis-ci.com/xel23/WebEditorForQueryLanguage.svg?branch=master)
+[![Build Status](https://travis-ci.com/xel23/WebEditorForQueryLanguage.svg?branch=master)](https://travis-ci.com/xel23/WebEditorForQueryLanguage)
 
 Web editor for YouTrack query language on frontend.
 -
