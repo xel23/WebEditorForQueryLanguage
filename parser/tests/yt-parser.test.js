@@ -25,14 +25,6 @@ class Binary {
     }
 }
 
-class Unary {
-    constructor(operator, right) {
-        this.type = 'Unary';
-        this.operator = operator;
-        this.right = right;
-    }
-}
-
 class Grouping {
     constructor(left, expr, right) {
         this.type = 'Grouping';
