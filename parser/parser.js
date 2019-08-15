@@ -239,8 +239,21 @@ class Parser {
                         expr = new Has(expr, operator, right_1, minus);
                     }
                     else if (this.match('..')) {
-                        let right = new ValueRange(right_1, this.previous(), this.unary());
-                        expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
+                        let vr_operator = this.previous();
+                        if (this.isAtEnd()) {
+                            this.current--;
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
+                            return expr;
+                        }
+                        let rValue = this.unary();
+                        if (rValue.type === types.WORD) {
+                            let right = new ValueRange(right_1, vr_operator, rValue);
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
+                        }
+                        else {
+                            this.current -= 2;
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
+                        }
                     }
                     else {
                         expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
@@ -385,34 +398,17 @@ class Parser {
     unary() {
         if (this.match('#') || this.match('-')) {
             let operator = this.previous();
-            if (arguments[0] === 'key') {
-                let right = this.primary();
-                if (right !== null) {
-                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
-                        this.current--;
-                        return  operator;
-                    }
+            let right = arguments[0] === 'key' ? this.primary() : this.item('value');
+            if (right !== null) {
+                if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
+                    this.current--;
+                    return  operator;
                 }
-                return new Unary(operator, right);
             }
-            else {
-                let right = this.item('value');
-                if (right !== null) {
-                    if (right.type !== types.WORD && !(right instanceof ValueRange || right instanceof QuotedText)) {
-                        this.current--;
-                        return  operator;
-                    }
-                }
-                return new Unary(operator, right);
-            }
+            return new Unary(operator, right);
         }
 
-        if (arguments[0] !== undefined) {
-            return this.primary(arguments[0])
-        }
-        else {
-            return this.primary()
-        }
+        return arguments[0] !== undefined ? this.primary(arguments[0]) : this.primary();
     }
 
     primary() {

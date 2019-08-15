@@ -24,10 +24,9 @@ class Lexer {
         switch (true) {
             case /[(]/.test(c): {
                 if (this.current - 1 > 0) {
-                    if (this.tokens[this.tokens.length - 1].type === '-' || this.tokens[this.tokens.length - 1].type === '#') {
-                        this.identifier();
-                    }
-                    if (this.str[this.current - 2] !== ' ' && this.str[this.current - 1] !== '(') {
+                    if (this.tokens[this.tokens.length - 1].type === '-' ||
+                        this.tokens[this.tokens.length - 1].type === '#' || (this.str[this.current - 2] !== ' ' &&
+                            this.str[this.current - 1] !== '(')) {
                         this.identifier();
                     }
                 }
@@ -73,10 +72,13 @@ class Lexer {
                 }
                 break;
             }
-            case /[\,]/.test(c): this.addToken(',', ',', this.start, this.current); break;
+            case /[,]/.test(c): this.addToken(',', ',', this.start, this.current); break;
             case /[\s]/.test(c): {
-                if (this.tokens.length === 0)
+                if (this.tokens.length === 0) {
+                    while (/[\s]/.test(this.str[this.current])) this.current++;
+                    this.addToken('TEXT', this.str.substring(this.start, this.current), this.start, this.current);
                     break;
+                }
                 else
                     this.tokens[this.tokens.length - 1].end++;
                 break;
@@ -96,24 +98,14 @@ class Lexer {
         return this.str[this.current - 1];
     }
 
-    addToken(type) {
-        if (arguments[1] === undefined) {
-            this.tokens.push(new Token(type, null));
-        }
-
-        else if (typeof arguments[1] === 'object' && !(arguments[2] !== undefined)){
-            let text = this.str.substring(this.start - this.current);
-            this.tokens.push(new Token(type, text, arguments[1]));
-        }
-
-        else if (arguments[2] !== undefined) {
-            this.tokens.push(new Token(type, arguments[1].toString(), arguments[1], arguments[2], arguments[3]));
+    addToken(type, text, begin, end) {
+        if (begin !== undefined) {
+            this.tokens.push(new Token(type, text, text, begin, end));
         }
 
         else {
-            this.tokens.push(new Token(type, arguments[1].toString(), arguments[1]));
+            this.tokens.push(new Token(type, text, text));
         }
-
     }
 
     isDigit(c) {

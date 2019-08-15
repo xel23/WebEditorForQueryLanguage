@@ -1,180 +1,16 @@
 const parser = require('../parser');
-
-class Token {
-    constructor(type, lexeme, literal) {
-        this.type = type;
-        this.lexeme = lexeme;
-        this.literal = literal;
-        if (arguments[3] !== undefined) {
-            this.begin = arguments[3];
-            this.end = arguments[4];
-        }
-    }
-
-    toString() {
-        return this.type + " " + this.lexeme + " " + this.literal;
-    }
-}
-
-class Binary {
-    constructor(left, operator, right) {
-        this.type = 'Binary';
-        this.left = left;
-        this.operator = operator;
-        this.right = right;
-    }
-}
-
-class Unary {
-    constructor(operator, right) {
-        this.type = 'Unary';
-        this.operator = operator;
-        this.right = right;
-    }
-}
-
-class Grouping {
-    constructor(left, expr, right) {
-        this.type = 'Grouping';
-        this.left = left;
-        this.expr = expr;
-        this.right = right;
-    }
-}
-
-class TermItem {
-    constructor (type, being, end) {
-        this.type = type;
-        this.begin = being;
-        this.end = end;
-    }
-}
-
-class QuotedText extends TermItem {
-    constructor(leftQuote, text, rightQuote) {
-        super('QuotedText', leftQuote.begin, rightQuote.end);
-        this.leftQuote = leftQuote;
-        this.lexeme = text.lexeme;
-        this.literal = text.literal;
-        this.begin = leftQuote.begin;
-        this.end = rightQuote.end;
-        this.rightQuote = rightQuote;
-    }
-}
-
-class NegativeText extends TermItem {
-    constructor(minus, qt) {
-        super('NegativeText', minus.begin, qt.end);
-        this.minus = minus;
-        this.text = qt;
-    }
-}
-
-class PositiveSingleValue extends TermItem {
-    constructor(lat, value) {
-        super('PositiveSingleValue', value.begin, value.end);
-        this.operator = lat;
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-    }
-}
-
-class NegativeSingleValue extends TermItem {
-    constructor(minus, value) {
-        super('NegativeSingleValue', value.begin, value.end);
-        this.minus = minus;
-        if (value instanceof ValueRange) {
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else {
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-        }
-    }
-}
-
-class ValueRange {
-    constructor(leftVal, operator, rightVal) {
-        this.type = 'ValueRange';
-        this.leftVal = leftVal;
-        this.operator = operator;
-        this.rightVal = rightVal;
-        this.begin = leftVal.begin;
-        this.end = rightVal.end;
-    }
-}
-
-class AttributeFilter {
-    constructor(value) {
-        if (value instanceof ValueRange) {
-            this.type = 'ValueRange';
-            this.left_lexeme = value.leftVal.lexeme;
-            this.left_lexeme_begin = value.leftVal.begin;
-            this.left_lexeme_end = value.leftVal.end;
-            this.left_literal = value.leftVal.literal;
-            this.right_lexeme = value.rightVal.lexeme;
-            this.right_lexeme_begin = value.rightVal.begin;
-            this.right_lexeme_end = value.rightVal.end;
-            this.right_literal = value.rightVal.literal;
-            this.vr_operator = value.operator;
-            this.begin = value.leftVal.begin;
-            this.end = value.rightVal.end;
-        }
-        else if (value instanceof NegativeSingleValue) {
-            this.type = value.type;
-            this.operator = value.minus;
-            if (value.left_lexeme !== undefined) {
-                this.left_lexeme = value.left_lexeme;
-                this.left_lexeme_begin = value.left_lexeme_begin;
-                this.left_lexeme_end = value.left_lexeme_end;
-                this.left_literal = value.left_literal;
-                this.right_lexeme = value.right_lexeme;
-                this.right_lexeme_begin = value.right_lexeme_begin;
-                this.right_lexeme_end = value.right_lexeme_end;
-                this.right_literal = value.right_literal;
-                this.vr_operator = value.vr_operator;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-            else {
-                this.lexeme = value.lexeme;
-                this.literal = value.literal;
-                this.begin = value.begin;
-                this.end = value.end;
-            }
-        }
-        else {
-            this.type = value.type === 'WORD' ? 'Value' : value.type;
-            if (value.type === 'TEXT') {
-                this.type = 'TEXT';
-            }
-            this.lexeme = value.lexeme;
-            this.literal = value.literal;
-            this.begin = value.begin;
-            this.end = value.end;
-        }
-    }
-}
-
-class Attribute {
-    constructor(value) {
-        this.type = value.type === 'TEXT' ? 'TEXT' : 'Attribute';
-        this.lexeme = value.lexeme;
-        this.literal = value.literal;
-        this.begin = value.begin;
-        this.end = value.end;
-    }
-}
+const Token = require('../token');
+const NegativeSingleValue = require('../general/NegativeSingleValue');
+const Binary = require('../general/Binary');
+const ValueRange = require('../general/ValueRange');
+const Grouping = require('../general/Grouping');
+const TermItem = require('../general/TermItem');
+const QuotedText = require('../general/QuotedText');
+const NegativeText = require('../general/NegativeText');
+const PositiveSingleValue = require('../general/PositiveSingleValue');
+const AttributeFilter = require('../general/AttributeFilter');
+const Attribute = require('../general/Attribute');
+const Text = require('../general/Text');
 
 class Has extends TermItem {
     constructor(has, operator, value) {
@@ -291,14 +127,6 @@ class Sort extends TermItem {
         else {
             this.value.push(new SortAttribute(token));
         }
-    }
-}
-
-class Text extends TermItem {
-    constructor(token) {
-        super('TEXT', token.begin, token.end);
-        this.lexeme = token.lexeme;
-        this.literal = token.literal;
     }
 }
 
@@ -1051,6 +879,48 @@ class Text extends TermItem {
                 new Token('OPERATOR', 'and', 'and'),
                 new Text(
                     new Token('TEXT', ',',',', 1, 2)
+                )
+            )},
+
+    {input: 'a: -b .. #', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'a', 'a', 0, 1)
+                        ),
+                        new Token(':', ':', ':', 1, 3),
+                        new NegativeSingleValue(
+                            new Token('-', '-', '-', 3, 4),
+                            new Token('WORD', 'b', 'b', 4, 6)
+                        )
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Text(
+                        new Token('TEXT', '.. ', '.. ', 6, 9)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', '#', '#', 9, 10)
+                )
+            )},
+
+    {input: 'a: -b ..', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'a', 'a', 0, 1)
+                    ),
+                    new Token(':', ':', ':', 1, 3),
+                    new NegativeSingleValue(
+                        new Token('-', '-', '-', 3, 4),
+                        new Token('WORD', 'b', 'b', 4, 6)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', '..', '..', 6, 8)
                 )
             )},
 
