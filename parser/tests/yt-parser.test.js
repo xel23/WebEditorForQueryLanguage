@@ -882,6 +882,26 @@ class Sort extends TermItem {
                 )
             )},
 
+    {input: 'a: -b .. #', output:
+            new Binary(
+                new Binary(
+                    new CategorizedFilter(
+                        new Attribute(
+                            new Token('WORD', 'a', 'a', 0, 1)
+                        ),
+                        new Token(':', ':', ':', 1, 3),
+                        new NegativeSingleValue(
+                            new Token('-', '-', '-', 3, 4),
+                            new Token('WORD', 'b', 'b', 4, 6)
+                        )
+                    ),
+                    new Token('OPERATOR', 'and', 'and'),
+                    new Token('TEXT', '.. ', '.. ', 6, 9)
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Token('TEXT', '#', '#', 9, 10)
+            )},
+
 ].forEach((it) => {
     test(`${it.input} should return ${it.output}`, () => {
         let par = new parser(it.input);

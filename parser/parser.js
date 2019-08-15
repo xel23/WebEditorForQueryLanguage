@@ -239,8 +239,16 @@ class Parser {
                         expr = new Has(expr, operator, right_1, minus);
                     }
                     else if (this.match('..')) {
-                        let right = new ValueRange(right_1, this.previous(), this.unary());
-                        expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
+                        let vr_operator = this.previous();
+                        let rValue = this.unary();
+                        if (rValue.type === types.WORD) {
+                            let right = new ValueRange(right_1, vr_operator, rValue);
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right));
+                        }
+                        else {
+                            this.current -= 2;
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
+                        }
                     }
                     else {
                         expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
