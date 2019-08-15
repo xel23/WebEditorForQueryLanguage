@@ -896,10 +896,32 @@ class Sort extends TermItem {
                         )
                     ),
                     new Token('OPERATOR', 'and', 'and'),
-                    new Token('TEXT', '.. ', '.. ', 6, 9)
+                    new Text(
+                        new Token('TEXT', '.. ', '.. ', 6, 9)
+                    )
                 ),
                 new Token('OPERATOR', 'and', 'and'),
-                new Token('TEXT', '#', '#', 9, 10)
+                new Text(
+                    new Token('TEXT', '#', '#', 9, 10)
+                )
+            )},
+
+    {input: 'a: -b ..', output:
+            new Binary(
+                new CategorizedFilter(
+                    new Attribute(
+                        new Token('WORD', 'a', 'a', 0, 1)
+                    ),
+                    new Token(':', ':', ':', 1, 3),
+                    new NegativeSingleValue(
+                        new Token('-', '-', '-', 3, 4),
+                        new Token('WORD', 'b', 'b', 4, 6)
+                    )
+                ),
+                new Token('OPERATOR', 'and', 'and'),
+                new Text(
+                    new Token('TEXT', '..', '..', 6, 8)
+                )
             )},
 
 ].forEach((it) => {

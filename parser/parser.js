@@ -240,6 +240,11 @@ class Parser {
                     }
                     else if (this.match('..')) {
                         let vr_operator = this.previous();
+                        if (this.isAtEnd()) {
+                            this.current--;
+                            expr = new CategorizedFilter(new Attribute(expr), operator, new NegativeSingleValue(minus, right_1));
+                            return expr;
+                        }
                         let rValue = this.unary();
                         if (rValue.type === types.WORD) {
                             let right = new ValueRange(right_1, vr_operator, rValue);
