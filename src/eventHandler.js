@@ -1,6 +1,5 @@
 const Highlighter = require('../parser/highlighter/highlighter');
 const Parser = require('../parser/parser');
-const errorEx = require('../parser/exceptions/syntaxException');
 const Cursor = require('../parser/cursor');
 const UndoRedo = require('../parser/UndoRedo');
 
@@ -33,11 +32,7 @@ class eventHandler {
 
             this.cursor.position = position;
         } catch (e) {
-            if (e instanceof errorEx) {
-                this.tree.value = e;
-            } else {
-                this.tree.value = e;
-            }
+            this.tree.value = e;
         }
     }
 
