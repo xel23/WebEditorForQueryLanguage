@@ -122,21 +122,29 @@ class Parser {
 
         while (this.matchOperator(operators.AND)) {
             let operator = this.previous();
+            let curToken = this.current;
             operator.type = 'OPERATOR';
-            let right = this.andOperand();
-            if (right !== null) {
-                if (right.type === types.WORD) {
-                    right.type = types.TEXT;
+            let right;
+            try {
+                right = this.andOperand();
+                if (right !== null) {
+                    if (right.type === types.WORD) {
+                        right.type = types.TEXT;
+                    }
+                    if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
+                        || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue
+                        || expr instanceof Grouping)) {
+                        this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
+                    }
+                    expr = new Binary(expr, operator, right);
                 }
-                if (!(expr instanceof CategorizedFilter || expr instanceof Has || expr instanceof Sort
-                    || expr instanceof PositiveSingleValue || expr instanceof NegativeSingleValue
-                    || expr instanceof Grouping)) {
-                    this.error("Missing parentheses before 'and' operator:\n", operator.begin - 1);
+                else {
+                    flag = true;
                 }
-                expr = new Binary(expr, operator, right);
-            }
-            else {
-                flag = true;
+            } catch (e) {
+                expr = new Binary(expr, operator, new Text(new Token('TEXT', this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.str.substring(this.tokens[curToken].begin,
+                    this.tokens[this.current - 1].end), this.tokens[curToken].begin, this.tokens[this.current - 1].end)));
             }
         }
 
