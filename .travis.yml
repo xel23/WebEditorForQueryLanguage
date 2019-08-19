@@ -12,6 +12,5 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   local_dir: ./
-  verbose: true
   on:
     branch: master
