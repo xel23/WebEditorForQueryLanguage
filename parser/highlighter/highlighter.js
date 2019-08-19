@@ -17,7 +17,7 @@ class Highlighter {
     }
 
     divWrapper() {
-        return arguments[0] !== undefined ? '<div id="treeWrapper" class="' + arguments[0] + '">' : '</div>';
+        return arguments[0] !== undefined ? '<div class="treeWrapper ' + arguments[0] + '">' : '</div>';
     }
 
     traverse(obj, str) {
