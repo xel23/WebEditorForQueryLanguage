@@ -4,6 +4,7 @@ class Suggester {
         this.popUp.setAttribute('class', 'popUp');
         this.field = field;
         let styles = document.createElement('style');
+        this.selected = null;
         styles.innerText = `
             .suf, .pre { 
                 color: grey; 
@@ -97,8 +98,19 @@ class Suggester {
     }
 
     keyPress(key) {
+        console.log('hi');
         if (key.keyCode === 38 && !key.altKey) {
-
+            console.log('hello');
+            let containers = document.getElementsByClassName('container_suggest');
+            if (this.selected === null || this.selected === document.getElementsByClassName('container_suggest')[0]) {
+                this.selected = containers[containers.length - 1];
+                containers[containers.length - 1].className += 'selected_suggest';
+            }
+            else {
+                this.selected.setAttribute('class', 'container_suggest');
+                this.selected = containers.previousSibling;
+                this.selected.className += 'selected_suggest';
+            }
         }
 
         if (key.keyCode === 40 && !key.altKey) {
