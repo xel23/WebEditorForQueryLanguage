@@ -2,6 +2,7 @@ const Highlighter = require('../parser/highlighter/highlighter');
 const Parser = require('../parser/parser');
 const Cursor = require('../parser/cursor');
 const UndoRedo = require('../parser/UndoRedo');
+const Suggester = require('../suggest/Suggester');
 
 class eventHandler {
     constructor(field, tree) {
@@ -10,6 +11,8 @@ class eventHandler {
         this.cursor = new Cursor(this.field);
         this.ur = new UndoRedo();
         this.ur.addState('', 0);
+
+        this.suggester = new Suggester(field);
 
         if (this.field.addEventListener) {
             this.field.addEventListener("input", this.listener.bind(this), false);
@@ -31,6 +34,8 @@ class eventHandler {
             this.field.innerHTML = highlightedQuery.getResult();
 
             this.cursor.position = position;
+
+            this.suggester.suggest(inputText, this.cursor.position);
         } catch (e) {
             this.tree.value = e;
         }
