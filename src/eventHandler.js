@@ -77,6 +77,9 @@ class eventHandler {
 
             keys.preventDefault();
         }
+        else {
+            this.suggester.keyPress(keys);
+        }
     }
 }
 

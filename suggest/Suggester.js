@@ -35,11 +35,9 @@ class Suggester {
                 background-color: #d4edff;
             }`;
         document.head.appendChild(styles);
-
-        document.onkeydown = this.keyPress.bind(this);
     }
 
-   async suggest(text, position) {
+    async suggest(text, position) {
         if (text == null || text === "") {
             this.popUp.innerHTML = '';
             return;
@@ -98,23 +96,42 @@ class Suggester {
     }
 
     keyPress(key) {
-        console.log('hi');
         if (key.keyCode === 38 && !key.altKey) {
-            console.log('hello');
+            key.preventDefault();
             let containers = document.getElementsByClassName('container_suggest');
-            if (this.selected === null || this.selected === document.getElementsByClassName('container_suggest')[0]) {
+            if (this.selected === null || this.selected === containers[0]) {
                 this.selected = containers[containers.length - 1];
-                containers[containers.length - 1].className += 'selected_suggest';
+                containers[0].setAttribute('class', 'container_suggest');
+                containers[containers.length - 1].className += ' selected_suggest';
             }
             else {
+                let cur = document.getElementsByClassName('selected_suggest')[0];
                 this.selected.setAttribute('class', 'container_suggest');
-                this.selected = containers.previousSibling;
-                this.selected.className += 'selected_suggest';
+                this.selected = cur.previousSibling;
+                while (this.selected.nodeName !== 'DIV') this.selected = this.selected.previousSibling;
+                this.selected.className += ' selected_suggest';
             }
         }
 
-        if (key.keyCode === 40 && !key.altKey) {
-
+        else if (key.keyCode === 40 && !key.altKey) {
+            key.preventDefault();
+            let containers = document.getElementsByClassName('container_suggest');
+            if (this.selected === null || this.selected === containers[containers.length - 1]) {
+                this.selected = containers[0];
+                containers[containers.length - 1].setAttribute('class', 'container_suggest');
+                containers[0].className += ' selected_suggest';
+            }
+            else {
+                let cur = document.getElementsByClassName('selected_suggest')[0];
+                this.selected.setAttribute('class', 'container_suggest');
+                this.selected = cur.nextSibling;
+                while (this.selected.nodeName !== 'DIV') this.selected = this.selected.nextSibling;
+                this.selected.className += ' selected_suggest';
+            }
+        }
+        else {
+            this.popUp.innerHTML = '';
+            this.selected = null;
         }
     }
 }
