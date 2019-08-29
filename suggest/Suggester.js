@@ -17,9 +17,25 @@ class Suggester {
                 
             }
             .suggestLine {
+                
+            }
+            .separator {
+                display: block;
+                color: grey;
+                padding: 0 16px 1px;
+                border-top: 1px solid grey;
+                font-size: 14px;
+                text-align: right;
+            }
+            .container_suggest {
                 padding: 3px 16px 5px;
+            }
+            .selected_suggest {
+                background-color: #d4edff;
             }`;
         document.head.appendChild(styles);
+
+        document.onkeydown = this.keyPress.bind(this);
     }
 
    async suggest(text, position) {
@@ -34,18 +50,33 @@ class Suggester {
 
         resp.text().then(res => {
             JSON.parse(res)['suggest']['items'].forEach( item => {
-                let suggestLine = document.createElement('div');
+                let container = document.createElement('div');
+                container.setAttribute('class', 'container_suggest');
+                let suggestLine = document.createElement('span');
                 suggestLine.setAttribute('class', 'suggestLine');
-                let pre, suf;
-                if ('pre' in item) {
-                    pre = document.createElement('span');
-                    pre.setAttribute('class', 'pre');
-                    pre.innerText = item['pre'];
-                    suf = document.createElement('span');
-                    suf.setAttribute('class', 'suf');
+                if (item['sep'] === true) {
+                    let separator = document.createElement('span');
+                    separator.setAttribute('class', 'separator');
+                    separator.innerText = item['d'];
+                    this.popUp.appendChild(separator);
                 }
-                suggestLine.innerText = item['o'];
-                this.popUp.appendChild(suggestLine);
+                else {
+                    let pre, suf;
+                    if ('pre' in item) {
+                        pre = document.createElement('span');
+                        pre.setAttribute('class', 'pre');
+                        pre.innerText = item['pre'];
+                        container.appendChild(pre);
+                        suf = document.createElement('span');
+                        suf.setAttribute('class', 'suf');
+                        suf.innerText = item['suf'];
+                    }
+                    suggestLine.innerHTML = item['o'].substring(0, item['ms']) + '<b>' + item['o'].substring(item['ms'], item['me'])
+                                            + '</b>' + item['o'].substring(item['me']);
+                    container.appendChild(suggestLine);
+                    container.appendChild(suf);
+                    this.popUp.appendChild(container);
+                }
             })
         }).then(() => {
             let explanation = document.createElement('div');
@@ -63,6 +94,16 @@ class Suggester {
            'left: ' + (elem.x + elem.width - 10).toString() + 'px;');
 
         document.body.appendChild(this.popUp);
+    }
+
+    keyPress(key) {
+        if (key.keyCode === 38 && !key.altKey) {
+
+        }
+
+        if (key.keyCode === 40 && !key.altKey) {
+
+        }
     }
 }
 

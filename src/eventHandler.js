@@ -35,7 +35,9 @@ class eventHandler {
 
             this.cursor.position = position;
 
-            this.suggester.suggest(inputText, this.cursor.position);
+            this.suggester.suggest(inputText, this.cursor.position).then(() => {
+
+            });
         } catch (e) {
             this.tree.value = e;
         }
