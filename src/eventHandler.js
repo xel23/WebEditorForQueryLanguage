@@ -21,7 +21,7 @@ class eventHandler {
         document.onkeydown = this.keyPress.bind(this);
     }
 
-    listener () {
+    listener(pos) {
         try {
             let inputText = this.field.innerText.replace(/\n/g, '');
             let position = this.cursor.position;
@@ -33,11 +33,9 @@ class eventHandler {
             let highlightedQuery = new Highlighter(res, inputText);
             this.field.innerHTML = highlightedQuery.getResult();
 
-            this.cursor.position = position;
+            this.cursor.position = Number.isInteger(pos) ? pos : position;
 
-            this.suggester.suggest(inputText, this.cursor.position).then(() => {
-
-            });
+            this.suggester.suggest(inputText, this.cursor.position);
         } catch (e) {
             this.tree.value = e;
         }
@@ -78,7 +76,16 @@ class eventHandler {
             keys.preventDefault();
         }
         else {
-            this.suggester.keyPress(keys);
+            const suggestion = this.suggester.keyPress(keys);
+            if (suggestion) {
+                const start = suggestion.start;
+                const end = suggestion.end;
+                const text = suggestion.textContent;
+
+                let inputText = this.field.innerText.replace(/\n/g, '');
+                this.field.innerText = inputText.slice(0, start) + text;
+                this.listener(end - 1);
+            }
         }
     }
 }

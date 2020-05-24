@@ -48,7 +48,8 @@ class Suggester {
             });
 
         resp.text().then(res => {
-            JSON.parse(res)['suggest']['items'].forEach( item => {
+            const items = JSON.parse(res)['suggest']['items'];
+            items.forEach( item => {
                 let container = document.createElement('div');
                 container.setAttribute('class', 'container_suggest');
                 let suggestLine = document.createElement('span');
@@ -76,8 +77,14 @@ class Suggester {
                     container.appendChild(suf);
                     this.popUp.appendChild(container);
                 }
-            })
-        }).then(() => {
+                container.start = item['cs'];
+                container.end = item['cp'];
+            });
+            return items;
+        }).then((items) => {
+            if (!items || (items && items.length)) {
+                return;
+            }
             let explanation = document.createElement('div');
             explanation.innerText = 'Press ↩ to complete selected item';
             explanation.setAttribute('class', 'explanation');
@@ -116,6 +123,9 @@ class Suggester {
         else if (key.keyCode === 40 && !key.altKey) {
             key.preventDefault();
             let containers = document.getElementsByClassName('container_suggest');
+            if (!containers) {
+                return;
+            }
             if (this.selected === null || this.selected === containers[containers.length - 1]) {
                 this.selected = containers[0];
                 containers[containers.length - 1].setAttribute('class', 'container_suggest');
@@ -124,10 +134,15 @@ class Suggester {
             else {
                 let cur = document.getElementsByClassName('selected_suggest')[0];
                 this.selected.setAttribute('class', 'container_suggest');
-                this.selected = cur.nextSibling;
+                this.selected = cur ? cur.nextSibling : containers[0];
                 while (this.selected.nodeName !== 'DIV') this.selected = this.selected.nextSibling;
                 this.selected.className += ' selected_suggest';
             }
+        }
+
+        else if (key.keyCode === 13) {
+            key.preventDefault();
+            return this.selected;
         }
         else {
             this.popUp.innerHTML = '';
