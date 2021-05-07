@@ -1,0 +1,32 @@
+{
+  "name": "webeditor",
+  "version": "1.0.0",
+  "description": "web editor for query language",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jest",
+    "test1": "node ./parser/parser",
+    "lexer": "node ./parser/lexer",
+    "start": "webpack-dev-server --mode=development --host=0.0.0.0 --devtool=cheap-module-eval-source-map --output-filename=./dist/main.js",
+    "build": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xel23/WebEditorForQueryLanguage.git"
+  },
+  "author": "Igor Kuzminov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xel23/WebEditorForQueryLanguage/issues"
+  },
+  "homepage": "https://github.com/xel23/WebEditorForQueryLanguage#readme",
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "webpack": "^4.35.2",
+    "webpack-cli": "^3.3.5"
+  },
+  "dependencies": {
+    "webpack-dev-server": "^3.7.2",
+    "lodash": "^4.17.19"
+  }
+}

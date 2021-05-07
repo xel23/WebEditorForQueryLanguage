@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Query Editor for YouTrack grammar</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        #result, .query {
+            font-family: 'Roboto Mono', monospace;
+        }
+        .PositiveSingleValue, .NegativeSingleValue, .QuotedText, .NegativeText, .Value, .ValueRange, .order {
+            color: #53a7ff;
+        }
+        .operator, .key, .Attribute {
+            font-weight: bold;
+            color: black;
+        }
+
+        .Parentheses {
+            color: grey;
+        }
+        .TEXT {
+            color: #cc8b00;
+        }
+        .treeWrapper {
+            display: inline;
+        }
+        .search {
+            color: #bad2e7;
+        }
+    </style>
+</head>
+<body class="text-center">
+
+<div class="container mt-3">
+    <br>
+    <div class="row">
+        <div class="col">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text border-right-0 border-primary bg-white"><i class="fa fa-search search" aria-hidden="true"></i></span>
+                </div>
+                <div id="inQuery" class="form-control border-left-0 border-primary query bg-white text-left" aria-describedby="basic-addon1" contenteditable="true"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-left">
+            <label class="text-primary" for="result">Result tree:</label>
+            <textarea id="result" class="form-control border-primary" rows="34"></textarea>
+        </div>
+    </div>
+</div>
+
+
+<script type="module" src="./dist/main.js"></script>
+</body>
+</html>
